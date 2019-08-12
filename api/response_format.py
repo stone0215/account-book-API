@@ -1,12 +1,15 @@
+# -*- coding: UTF-8 -*-
+
+
 class ResponseFormat:
-    def true_return(self, data, msg="请求成功"):
+    def true_return(self, data, msg="success"):
         return {
             "status": 1,
             "data": data,
             "msg": msg
         }
 
-    def false_return(self, data, msg="请求失败"):
+    def false_return(self, data, msg="fail"):
         return {
             "status": 0,
             "error": data,
