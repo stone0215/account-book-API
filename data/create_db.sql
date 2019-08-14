@@ -171,8 +171,8 @@ CREATE TABLE IF NOT EXISTS Budget (
 
 -- 定期支出提醒設定檔
 CREATE TABLE IF NOT EXISTS Alarm (
+    alarm_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	alarm_type CHARACTER(1) NOT NULL,
 	alarm_date VARCHAR(5) NOT NULL,
     content NVARCHAR(60) NOT NULL
 );
-CREATE INDEX Alarm_type_idx ON Alarm (type);
