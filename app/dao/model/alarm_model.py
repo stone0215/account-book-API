@@ -1,12 +1,12 @@
 
 from ..dao_base import DaoBase
 
-db = DaoBase.getDB()
+db = DaoBase().getDB()
 
 
 class Alarm(db.Model):
     __tablename__ = 'Alarm'
-    alarm_id ＝ db.Column(db.Integer, primary_key=True)
+    alarm_id = db.Column(db.Integer, primary_key=True)
     alarm_type = db.Column(db.Integer, index=True)
     alarm_date = db.Column(db.String(60), nullable=False)
     content = db.Column(db.String(30), nullable=False)

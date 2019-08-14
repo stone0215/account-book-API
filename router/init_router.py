@@ -2,6 +2,8 @@ from flask import jsonify
 
 from api.response_format import ResponseFormat
 
+from .alarmRouter import init_alarm_api
+
 
 def init(app):
     init_alarm_api(app)

@@ -15,7 +15,7 @@ def init_alarm_api(app):
             alarms = Alarm.get_all(Alarm)
             for alarm in alarms:
                 output.append(Alarm.output(Alarm, alarm))
-        except Exception, error:
+        except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
             return jsonify(ResponseFormat.true_return(ResponseFormat, output))
@@ -28,7 +28,7 @@ def init_alarm_api(app):
             alarms = Alarm.get(Alarm, day)
             for alarm in alarms:
                 output.append(Alarm.output(Alarm, alarm))
-        except Exception, error:
+        except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
             return jsonify(ResponseFormat.true_return(ResponseFormat, output))
@@ -48,7 +48,7 @@ def init_alarm_api(app):
                 return getUser(alarm.user_id)
             else:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, result))
-        except Exception, error:
+        except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
             return jsonify(ResponseFormat.true_return(ResponseFormat, output))

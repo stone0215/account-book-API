@@ -45,10 +45,10 @@ CREATE TABLE IF NOT EXISTS FX_Rate (
 CREATE TABLE IF NOT EXISTS Code_Data (
 	type CHARACTER(1),
 	code VARCHAR(8),
-	group VARCHAR(8), --如果是副選單，會寫入Code_Data.code
+	code_group VARCHAR(8), --如果是副選單，會寫入Code_Data.code
     name NVARCHAR(60) NOT NULL,
-    index TINYINT,
-	PRIMARY KEY (type, code, group)
+    code_index TINYINT,
+	PRIMARY KEY (type, code, code_group)
 );
 
 -- 信用卡設定檔
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS Journal (
     spending DECIMAL(8,2) NOT NULL,
     note TEXT
 );
-CREATE INDEX Journal_spend_date_idx ON Journal (spend_date);
+CREATE INDEX IF NOT EXISTS Journal_spend_date_idx ON Journal (spend_date);
 
 -- 股票流水帳檔
 CREATE TABLE IF NOT EXISTS Stock_Journal (
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS Stock_Journal (
     sell_price DECIMAL(7,3),
     type CHARACTER(1) NOT NULL
 );
-CREATE INDEX Stock_Journal_idx ON Stock_Journal (code, buy_date, type);
+CREATE INDEX IF NOT EXISTS Stock_Journal_idx ON Stock_Journal (code, buy_date, type);
 
 -- 股票設定檔
 CREATE TABLE IF NOT EXISTS TStock_Data (
