@@ -29,7 +29,7 @@ class Alarm(db.Model):
 
     def getByMonth(self, month):
         # alarm_date 可能是每個月 26 或 8/26
-        return db.engine.execute("SELECT alarm_date, content FROM Alarm WHERE alarm_type='M' OR content LIKE {}+'/%'".format(month))
+        return db.engine.execute(f"SELECT alarm_date, content FROM Alarm WHERE alarm_type='M' OR content LIKE {month}+'/%'")
 
     def add(self, alarm):
         db.session.add(alarm)
