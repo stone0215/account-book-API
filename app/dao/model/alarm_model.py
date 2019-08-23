@@ -24,10 +24,10 @@ class Alarm(db.Model):
     def getAll(self):
         return self.query.all()
 
-    def getByKey(self, alarm_id):
+    def queryByKey(self, alarm_id):
         return self.query.filter_by(alarm_id=alarm_id).first()
 
-    def getByMonth(self, month):
+    def queryByMonth(self, month):
         # alarm_date 可能是每個月 26 或 8/26
         return db.engine.execute(f"SELECT alarm_date, content FROM Alarm WHERE alarm_type='M' OR content LIKE {month}+'/%'")
 

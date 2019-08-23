@@ -25,8 +25,7 @@ def init_alarm_api(app):
         output = []
 
         try:
-            alarms = Alarm.getByMonth(Alarm, request.json['condition'])
-            print(alarms)
+            alarms = Alarm.queryByMonth(Alarm, request.json['condition'])
             for alarm in alarms:
                 output.append(Alarm.output4View(Alarm, alarm))
         except Exception as error:
@@ -35,7 +34,7 @@ def init_alarm_api(app):
             return jsonify(ResponseFormat.true_return(ResponseFormat, output))
 
     @app.route('/alarm', methods=['POST'])
-    def addAlarms():
+    def addAlarm():
         try:
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
@@ -51,9 +50,9 @@ def init_alarm_api(app):
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 
     @app.route('/alarm/<int:alarmId>', methods=['PUT'])
-    def updateAlarms(alarmId):
+    def updateAlarm(alarmId):
         try:
-            alarm = Alarm.getByKey(Alarm, alarmId)
+            alarm = Alarm.queryByKey(Alarm, alarmId)
             if alarm is None:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
             else:
@@ -70,17 +69,12 @@ def init_alarm_api(app):
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 
     @app.route('/alarm/<int:alarmId>', methods=['DELETE'])
-    def deleteAlarms(alarmId):
+    def deleteAlarm(alarmId):
         try:
-            alarm = Alarm.getByKey(Users, alarmId)
+            alarm = Alarm.queryByKey(Alarm, alarmId)
             if alarm is None:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
             else:
-                inputData = request.get_json(force=True)
-
-                alarm.alarm_type = inputData['alarm_type']
-                alarm.alarm_date = inputData['alarm_date']
-                alarm.content = inputData['content']
                 if Alarm.delete(Alarm, alarmId):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
                 else:
