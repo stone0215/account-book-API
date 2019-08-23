@@ -3,10 +3,12 @@ from flask import jsonify
 from api.response_format import ResponseFormat
 
 from .alarmRouter import init_alarm_api
+from .budgetRouter import init_budget_api
 
 
 def init(app):
     init_alarm_api(app)
+    init_budget_api(app)
 
     @app.route('/')
     def index():
