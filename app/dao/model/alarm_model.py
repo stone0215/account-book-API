@@ -27,9 +27,9 @@ class Alarm(db.Model):
     def queryByKey(self, alarm_id):
         return self.query.filter_by(alarm_id=alarm_id).first()
 
-    def queryByMonth(self, month):
+    def queryByConditions(self, date):
         # alarm_date 可能是每個月 26 或 8/26
-        return db.engine.execute(f"SELECT alarm_date, content FROM Alarm WHERE alarm_type='M' OR content LIKE {month}+'/%'")
+        return db.engine.execute(f"SELECT * FROM Alarm WHERE alarm_date = '{date}' OR alarm_date LIKE '%{date}'")
 
     def add(self, alarm):
         db.session.add(alarm)

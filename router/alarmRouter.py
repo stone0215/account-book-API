@@ -20,14 +20,14 @@ def init_alarm_api(app):
         else:
             return jsonify(ResponseFormat.true_return(ResponseFormat, output))
 
-    @app.route('/alarm/get-by-day', methods=['GET'])
+    @app.route('/alarm/query', methods=['GET'])
     def getAlarmsByDay():
         output = []
 
         try:
-            alarms = Alarm.queryByMonth(Alarm, request.json['condition'])
+            alarms = Alarm.queryByConditions(Alarm, request.args.get('date'))
             for alarm in alarms:
-                output.append(Alarm.output4View(Alarm, alarm))
+                output.append(Alarm.output(Alarm, alarm))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
