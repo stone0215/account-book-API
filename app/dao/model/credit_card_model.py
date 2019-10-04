@@ -41,10 +41,11 @@ class CreditCard(db.Model):
         sql.append("SELECT * FROM Credit_Card WHERE 1=1")
 
         if conditions.get('card_name') != '':
-            sql.append(f"AND card_name LIKE '%{conditions.get('card_name')}'")
+            sql.append(
+                f" AND card_name LIKE '%{conditions.get('card_name')}%'")
 
         if conditions.get('in_use') != '':
-            sql.append(f"AND in_use LIKE = '{conditions.get('in_use')}'")
+            sql.append(f" AND in_use = '{conditions.get('in_use')}'")
 
         return db.engine.execute(''.join(sql))
 
