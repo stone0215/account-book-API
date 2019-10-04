@@ -15,10 +15,11 @@ CREATE TABLE IF NOT EXISTS Target_Setting (
 -- 帳戶設定檔
 CREATE TABLE IF NOT EXISTS Account (
 	account_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-	account_type CHARACTER(1),
-	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
 	name NVARCHAR(60) NOT NULL,
+	account_type CHARACTER(1) NOT NULL,
+	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
     is_calculate CHARACTER(1) NOT NULL,
+	in_use CHARACTER(1) NOT NULL,
 	discount DECIMAL(4,3) -- 最多總共四位，小數點三位
 );
 
