@@ -54,10 +54,12 @@ CREATE TABLE IF NOT EXISTS Code_Data (
 -- 信用卡設定檔
 CREATE TABLE IF NOT EXISTS Credit_Card (
 	credit_card_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-	name NVARCHAR(60) NOT NULL,
+	card_name NVARCHAR(60) NOT NULL,
 	last_day CHARACTER(2) NOT NULL,
     charge_day CHARACTER(2) NOT NULL,
-    feedback_way CHARACTER(1) NOT NULL,
+    feedback_way CHARACTER(1) NOT NULL, --C：現金/ P：紅利/ N：無
+	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
+	in_use CHARACTER(1) NOT NULL,
     note TEXT
 );
 
