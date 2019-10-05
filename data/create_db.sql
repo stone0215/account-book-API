@@ -44,12 +44,13 @@ CREATE TABLE IF NOT EXISTS FX_Rate (
 
 -- 代碼檔
 CREATE TABLE IF NOT EXISTS Code_Data (
-	type CHARACTER(1),
-	code VARCHAR(8),
-	code_group VARCHAR(8), --如果是副選單，會寫入Code_Data.code
-    name NVARCHAR(60) NOT NULL,
-    code_index TINYINT,
-	PRIMARY KEY (type, code, code_group)
+	code_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	code_type CHARACTER(1) NOT NULL, --S：固定支出/ F：浮動支出/ I：收入/ A：資產
+	name NVARCHAR(60) NOT NULL,
+	code_group INTEGER, --如果是副選單，會寫入Code_Data.code_id
+	code_group_name NVARCHAR(60), --如果是副選單，會寫入Code_Data.name
+	in_use CHARACTER(1) NOT NULL,
+    code_index TINYINT
 );
 
 -- 信用卡設定檔

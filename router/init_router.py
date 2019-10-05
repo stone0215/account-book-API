@@ -5,6 +5,7 @@ from api.response_format import ResponseFormat
 from .accountRouter import init_account_api
 from .alarmRouter import init_alarm_api
 from .budgetRouter import init_budget_api
+from .codeRouter import init_code_api
 from .creditCardRouter import init_credit_card_api
 
 
@@ -17,7 +18,8 @@ def init(app):
     def serverAlive():
         return jsonify(ResponseFormat.true_return(ResponseFormat, True))
 
+    init_account_api(app)
     init_alarm_api(app)
     init_budget_api(app)
+    init_code_api(app)
     init_credit_card_api(app)
-    init_account_api(app)
