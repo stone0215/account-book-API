@@ -31,9 +31,13 @@ class Code(db.Model):
     def queryByKey(self, code_id):
         return self.query.filter_by(code_id=code_id).first()
 
+    def querySubCodeList(self, parent_id):
+        return self.query.filter_by(code_group=parent_id)
+
     def queryByConditions(self, conditions):
         sql = []
-        sql.append("SELECT * FROM Code_Data WHERE 1=1")
+        sql.append(
+            "SELECT code_id, name, code_type, in_use, code_index FROM Code_Data WHERE 1=1")
 
         if conditions.get('name') != '':
             sql.append(f" AND name LIKE '%{conditions.get('name')}%'")
@@ -46,13 +50,13 @@ class Code(db.Model):
 
         return db.engine.execute(''.join(sql))
 
-    def add(self, account):
-        db.session.add(account)
-        # db.session.flush()
+    def add(self, code):
+        db.session.add(code)
+        db.session.flush()
 
-        print(DaoBase.session_commit(self))  # print sql string
+        # print(DaoBase.session_commit(self))  # print sql string
         if DaoBase.session_commit(self) == '':
-            return account
+            return code
         else:
             return False
 
@@ -69,13 +73,19 @@ class Code(db.Model):
         else:
             return False
 
-    def output(self, CreditCard):
+    def outputMainCode(self, Code):
         return {
-            'code_id': CreditCard.code_id,
-            'name': CreditCard.name,
-            'code_type': CreditCard.code_type,
-            'code_group': CreditCard.code_group,
-            'code_group_name': CreditCard.code_group_name,
-            'in_use': CreditCard.in_use,
-            'code_index': CreditCard.code_index
+            'code_id': Code.code_id,
+            'name': Code.name,
+            'code_type': Code.code_type,
+            'in_use': Code.in_use,
+            'code_index': Code.code_index
+        }
+
+    def outputSubCode(self, Code):
+        return {
+            'code_id': Code.code_id,
+            'name': Code.name,
+            'in_use': Code.in_use,
+            'code_index': Code.code_index
         }

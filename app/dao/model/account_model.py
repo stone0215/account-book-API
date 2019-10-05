@@ -70,13 +70,13 @@ class Account(db.Model):
         else:
             return False
 
-    def output(self, CreditCard):
+    def output(self, Account):
         return {
-            'account_id': CreditCard.account_id,
-            'name': CreditCard.name,
-            'account_type': CreditCard.account_type,
-            'fx_code': CreditCard.fx_code,
-            'is_calculate': CreditCard.is_calculate,
-            'in_use': CreditCard.in_use,
-            'discount': CreditCard.discount
+            'account_id': Account.account_id,
+            'name': Account.name,
+            'account_type': Account.account_type,
+            'fx_code': Account.fx_code,
+            'is_calculate': Account.is_calculate,
+            'in_use': Account.in_use,
+            'discount': Account.discount
         }
