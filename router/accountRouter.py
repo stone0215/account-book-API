@@ -28,7 +28,7 @@ def init_account_api(app):
             inputData = request.get_json(force=True)
             account = Account(name=inputData['name'], account_type=inputData['account_type'],
                               fx_code=inputData['fx_code'], is_calculate=inputData['is_calculate'],
-                              in_use=inputData['in_use'], discount=inputData['discount'])
+                              in_use=inputData['in_use'], discount=inputData['discount'], account_index=inputData['account_index'])
 
             result = Account.add(Account, account)
             if result:
@@ -53,6 +53,7 @@ def init_account_api(app):
                 account.is_calculate = inputData['is_calculate']
                 account.in_use = inputData['in_use']
                 account.discount = inputData['discount']
+                account.account_index = inputData['account_index']
                 if Account.update(Account):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
                 else:

@@ -1,5 +1,3 @@
-from sqlalchemy import desc, asc
-
 from ..dao_base import DaoBase
 
 db = DaoBase().getDB()
@@ -14,16 +12,18 @@ class CreditCard(db.Model):
     feedback_way = db.Column(db.String(1), nullable=False)
     fx_code = db.Column(db.String(3), nullable=False)
     in_use = db.Column(db.String(1), nullable=False, index=True)
+    credit_card_index = db.Column(db.SmallInteger)
     note = db.Column(db.Text)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, card_name, last_day, charge_day, feedback_way, fx_code, in_use, note):
+    def __init__(self, card_name, last_day, charge_day, feedback_way, fx_code, in_use, note, credit_card_index=None):
         self.card_name = card_name
         self.last_day = last_day
         self.charge_day = charge_day
         self.feedback_way = feedback_way  # C：現金/ P：紅利/ N：無
         self.fx_code = fx_code
         self.in_use = in_use  # Y/M
+        self.credit_card_index = credit_card_index
         self.note = note
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
@@ -38,7 +38,8 @@ class CreditCard(db.Model):
 
     def queryByConditions(self, conditions):
         sql = []
-        sql.append("SELECT * FROM Credit_Card WHERE 1=1")
+        sql.append(
+            "SELECT * FROM Credit_Card WHERE 1=1")
 
         if conditions.get('card_name') != '':
             sql.append(
@@ -46,6 +47,8 @@ class CreditCard(db.Model):
 
         if conditions.get('in_use') != '':
             sql.append(f" AND in_use = '{conditions.get('in_use')}'")
+
+        sql.append(" ORDER BY credit_card_index ASC")
 
         return db.engine.execute(''.join(sql))
 
@@ -81,5 +84,6 @@ class CreditCard(db.Model):
             'feedback_way': CreditCard.feedback_way,
             'fx_code': CreditCard.fx_code,
             'in_use': CreditCard.in_use,
+            'credit_card_index': CreditCard.credit_card_index,
             'note': CreditCard.note
         }

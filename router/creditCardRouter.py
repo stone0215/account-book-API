@@ -27,7 +27,8 @@ def init_credit_card_api(app):
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
             credit_card = CreditCard(card_name=inputData['card_name'], last_day=inputData['last_day'], charge_day=inputData['charge_day'],
-                                     feedback_way=inputData['feedback_way'], fx_code=inputData['fx_code'], in_use=inputData['in_use'], note=inputData['note'])
+                                     feedback_way=inputData['feedback_way'], fx_code=inputData['fx_code'], in_use=inputData['in_use'],
+                                     credit_card_index=inputData['credit_card_index'], note=inputData['note'])
 
             result = CreditCard.add(CreditCard, credit_card)
             if result:
@@ -52,6 +53,7 @@ def init_credit_card_api(app):
                 credit_card.feedback_way = inputData['feedback_way']
                 credit_card.fx_code = inputData['fx_code']
                 credit_card.in_use = inputData['in_use']
+                credit_card.credit_card_index = inputData['credit_card_index']
                 credit_card.note = inputData['note']
                 if CreditCard.update(CreditCard):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))

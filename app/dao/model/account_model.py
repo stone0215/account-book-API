@@ -1,5 +1,3 @@
-from sqlalchemy import desc, asc
-
 from ..dao_base import DaoBase
 
 db = DaoBase().getDB()
@@ -13,16 +11,18 @@ class Account(db.Model):
     fx_code = db.Column(db.String(3), nullable=False)
     is_calculate = db.Column(db.String(1), nullable=False)
     in_use = db.Column(db.String(1), nullable=False, index=True)
-    discount = db.Column(db.Float)
+    discount = db.Column(db.Float),
+    account_index = db.Column(db.SmallInteger)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, name, account_type, fx_code, is_calculate, in_use, discount):
+    def __init__(self, name, account_type, fx_code, is_calculate, in_use, discount, account_index):
         self.name = name
         self.account_type = account_type  # N：一般帳戶/ F：財務規劃帳戶
         self.fx_code = fx_code
         self.is_calculate = is_calculate
         self.in_use = in_use  # Y/M
         self.discount = discount
+        self.account_index = account_index
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -44,6 +44,8 @@ class Account(db.Model):
 
         if conditions.get('in_use') != '':
             sql.append(f" AND in_use = '{conditions.get('in_use')}'")
+
+        sql.append(" ORDER BY account_index ASC")
 
         return db.engine.execute(''.join(sql))
 
@@ -78,5 +80,6 @@ class Account(db.Model):
             'fx_code': Account.fx_code,
             'is_calculate': Account.is_calculate,
             'in_use': Account.in_use,
-            'discount': Account.discount
+            'discount': Account.discount,
+            'account_index': Account.account_index
         }

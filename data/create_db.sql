@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS Account (
 	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
     is_calculate CHARACTER(1) NOT NULL,
 	in_use CHARACTER(1) NOT NULL,
-	discount DECIMAL(4,3) -- 最多總共四位，小數點三位
+	discount DECIMAL(4,3), -- 最多總共四位，小數點三位
+	account_index TINYINT
 );
 
 -- 帳戶餘額檔，關帳後寫入
@@ -62,6 +63,7 @@ CREATE TABLE IF NOT EXISTS Credit_Card (
     feedback_way CHARACTER(1) NOT NULL, --C：現金/ P：紅利/ N：無
 	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
 	in_use CHARACTER(1) NOT NULL,
+	credit_card_index TINYINT,
     note TEXT
 );
 
@@ -180,4 +182,15 @@ CREATE TABLE IF NOT EXISTS Alarm (
 	alarm_type CHARACTER(1) NOT NULL,
 	alarm_date VARCHAR(5) NOT NULL,
     content NVARCHAR(60) NOT NULL
+);
+
+-- 其他資產設定檔
+CREATE TABLE IF NOT EXISTS Other_Asset (
+    asset_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	asset_name NVARCHAR(60) NOT NULL,
+	account_id INTEGER NOT NULL,
+    account_name NVARCHAR(60) NOT NULL,
+	expected_spend INTEGER NOT NULL,
+	in_use CHARACTER(1) NOT NULL,
+	asset_index TINYINT
 );
