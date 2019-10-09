@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS Other_Asset (
 	asset_name NVARCHAR(60) NOT NULL,
 	account_id INTEGER NOT NULL,
     account_name NVARCHAR(60) NOT NULL,
-	expected_spend INTEGER NOT NULL,
+	expected_spend INTEGER,
 	in_use CHARACTER(1) NOT NULL,
 	asset_index TINYINT
 );

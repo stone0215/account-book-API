@@ -74,3 +74,16 @@ def init_account_api(app):
                     return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to delete account data'))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+
+    @app.route('/account/selection', methods=['GET'])
+    def getAccountSelections():
+        output = []
+
+        try:
+            accounts = Account.query4Selection(Account)
+            for account in accounts:
+                output.append(Account.output4Selection(Account, account))
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, output))

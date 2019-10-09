@@ -88,12 +88,10 @@ def init_code_api(app):
         try:
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
-            print('123')
             code = Code(name=inputData['name'], code_type=inputData['code_type'],
                         code_group=inputData['code_group'], code_group_name=inputData['code_group_name'],
                         in_use=inputData['in_use'], code_index=inputData['code_index'])
 
-            print('456')
             result = Code.add(Code, code)
             if result:
                 return jsonify(ResponseFormat.true_return(ResponseFormat, Code.outputSubCode(Code, result)))
