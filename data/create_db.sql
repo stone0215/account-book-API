@@ -1,8 +1,11 @@
 -- 初始金額設定檔
 CREATE TABLE IF NOT EXISTS Initial_Setting (
-	code VARCHAR(10) PRIMARY KEY, -- 對應 Code_Data.code
-    name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
-	setting_value VARCHAR(10) NOT NULL
+	code_id INTEGER, -- 對應 Code_Data.code_id 或 Account.account_id 或 Credit_Card.credit_card_id
+    code_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
+	initial_type CHARACTER(1) NOT NULL, -- 對應 Code_Data.code_type
+	setting_value VARCHAR(10) NOT NULL,
+	setting_date DATE NOT NULL,
+	PRIMARY KEY (code_id, code_type)
 );
 
 -- 年度目標設定檔
@@ -188,6 +191,7 @@ CREATE TABLE IF NOT EXISTS Alarm (
 CREATE TABLE IF NOT EXISTS Other_Asset (
     asset_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	asset_name NVARCHAR(60) NOT NULL,
+	asset_type CHARACTER(1) NOT NULL,
 	account_id INTEGER NOT NULL,
     account_name NVARCHAR(60) NOT NULL,
 	expected_spend INTEGER,
