@@ -3,7 +3,7 @@
 from flask import jsonify, request
 
 from api.response_format import ResponseFormat
-from app.dao.model.code_model import Code
+from app.dao.model.setting.code_model import Code
 
 
 def init_code_api(app):

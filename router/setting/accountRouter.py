@@ -3,7 +3,8 @@
 from flask import jsonify, request
 
 from api.response_format import ResponseFormat
-from app.dao.model.account_model import Account
+from app.dao.model.setting.account_model import Account
+from app.dao.model.setting.initial_model import InitialSetting
 
 
 def init_account_api(app):
@@ -26,13 +27,20 @@ def init_account_api(app):
         try:
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
+
+            # 新增帳戶
             account = Account(name=inputData['name'], account_type=inputData['account_type'],
                               fx_code=inputData['fx_code'], is_calculate=inputData['is_calculate'],
                               in_use=inputData['in_use'], discount=inputData['discount'], account_index=inputData['account_index'])
+            outputData = Account.add(Account, account)
 
-            result = Account.add(Account, account)
+            # 新增初始值
+            initial = InitialSetting(code_id=account.account_id, code_name=account.name,
+                                     code_type='A', setting_value=0)
+            result = InitialSetting.add(InitialSetting, initial)
+
             if result:
-                return jsonify(ResponseFormat.true_return(ResponseFormat, Account.output(Account, result)))
+                return jsonify(ResponseFormat.true_return(ResponseFormat, Account.output(Account, outputData)))
             else:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to add account data'))
         except Exception as error:

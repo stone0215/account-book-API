@@ -1,6 +1,6 @@
 from sqlalchemy import desc, asc
 
-from ..dao_base import DaoBase
+from ...dao_base import DaoBase
 
 db = DaoBase().getDB()
 

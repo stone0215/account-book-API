@@ -3,7 +3,7 @@
 from flask import jsonify, request
 
 from api.response_format import ResponseFormat
-from app.dao.model.budget_model import Budget
+from app.dao.model.setting.budget_model import Budget
 
 
 def init_budget_api(app):

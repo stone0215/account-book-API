@@ -1,4 +1,4 @@
-from ..dao_base import DaoBase
+from ...dao_base import DaoBase
 
 db = DaoBase().getDB()
 
@@ -52,15 +52,14 @@ class CreditCard(db.Model):
 
         return db.engine.execute(''.join(sql))
 
+    def query4Selection(self):
+        return self.query.with_entities(self.credit_card_id, self.card_name).filter_by(in_use='Y')
+
     def add(self, credit_card):
         db.session.add(credit_card)
         db.session.flush()
 
-        # print(DaoBase.session_commit(self)) # print sql string
-        if DaoBase.session_commit(self) == '':
-            return credit_card
-        else:
-            return False
+        return credit_card
 
     def update(self):
         if DaoBase.session_commit(self) == '':
@@ -75,15 +74,21 @@ class CreditCard(db.Model):
         else:
             return False
 
-    def output(self, CreditCard):
+    def output(self, credit_card):
         return {
-            'credit_card_id': CreditCard.credit_card_id,
-            'card_name': CreditCard.card_name,
-            'last_day': CreditCard.last_day,
-            'charge_day': CreditCard.charge_day,
-            'feedback_way': CreditCard.feedback_way,
-            'fx_code': CreditCard.fx_code,
-            'in_use': CreditCard.in_use,
-            'credit_card_index': CreditCard.credit_card_index,
-            'note': CreditCard.note
+            'credit_card_id': credit_card.credit_card_id,
+            'card_name': credit_card.card_name,
+            'last_day': credit_card.last_day,
+            'charge_day': credit_card.charge_day,
+            'feedback_way': credit_card.feedback_way,
+            'fx_code': credit_card.fx_code,
+            'in_use': credit_card.in_use,
+            'credit_card_index': credit_card.credit_card_index,
+            'note': credit_card.note
+        }
+
+    def output4Selection(self, credit_card):
+        return {
+            'key': credit_card.credit_card_id,
+            'value': credit_card.card_name
         }

@@ -3,7 +3,7 @@
 from flask import jsonify, request
 
 from api.response_format import ResponseFormat
-from app.dao.model.alarm_model import Alarm
+from app.dao.model.setting.alarm_model import Alarm
 
 
 def init_alarm_api(app):

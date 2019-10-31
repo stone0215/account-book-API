@@ -1,4 +1,4 @@
-from ..dao_base import DaoBase
+from ...dao_base import DaoBase
 
 db = DaoBase().getDB()
 
@@ -56,11 +56,7 @@ class Account(db.Model):
         db.session.add(account)
         db.session.flush()
 
-        # print(DaoBase.session_commit(self)) # print sql string
-        if DaoBase.session_commit(self) == '':
-            return account
-        else:
-            return False
+        return account
 
     def update(self):
         if DaoBase.session_commit(self) == '':

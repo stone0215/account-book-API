@@ -3,7 +3,8 @@
 from flask import jsonify, request
 
 from api.response_format import ResponseFormat
-from app.dao.model.credit_card_model import CreditCard
+from app.dao.model.setting.credit_card_model import CreditCard
+from app.dao.model.setting.initial_model import InitialSetting
 
 
 def init_credit_card_api(app):
@@ -26,13 +27,21 @@ def init_credit_card_api(app):
         try:
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
+
+            # 新增信用卡
             credit_card = CreditCard(card_name=inputData['card_name'], last_day=inputData['last_day'], charge_day=inputData['charge_day'],
                                      feedback_way=inputData['feedback_way'], fx_code=inputData['fx_code'], in_use=inputData['in_use'],
                                      credit_card_index=inputData['credit_card_index'], note=inputData['note'])
 
-            result = CreditCard.add(CreditCard, credit_card)
+            outputData = CreditCard.add(CreditCard, credit_card)
+
+            # 新增初始值
+            initial = InitialSetting(code_id=credit_card.credit_card_id, code_name=credit_card.card_name,
+                                     code_type='C', setting_value=0)
+            result = InitialSetting.add(InitialSetting, initial)
+
             if result:
-                return jsonify(ResponseFormat.true_return(ResponseFormat, CreditCard.output(CreditCard, result)))
+                return jsonify(ResponseFormat.true_return(ResponseFormat, CreditCard.output(CreditCard, outputData)))
             else:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to add credit card data'))
         except Exception as error:

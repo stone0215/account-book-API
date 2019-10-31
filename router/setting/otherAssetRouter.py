@@ -3,8 +3,8 @@
 from flask import jsonify, request
 
 from api.response_format import ResponseFormat
-from app.dao.model.code_model import Code
-from app.dao.model.other_asset_model import OtherAsset
+from app.dao.model.setting.code_model import Code
+from app.dao.model.setting.other_asset_model import OtherAsset
 
 
 def init_other_asset_api(app):
@@ -29,16 +29,17 @@ def init_other_asset_api(app):
 
             # 新增其他資產
             other_asset = OtherAsset(asset_name=inputData['asset_name'], account_id=inputData['account_id'],
-                                     account_name=inputData['account_name'], expected_spend=inputData['expected_spend'],
+                                     account_name=inputData['account_name'], asset_type=inputData[
+                                         'asset_type'], expected_spend=inputData['expected_spend'],
                                      in_use=inputData['in_use'], asset_index=inputData['asset_index'])
-            result = OtherAsset.add(OtherAsset, other_asset)
+            outputData = OtherAsset.add(OtherAsset, other_asset)
             # 新增代碼主選單
             code = Code(code_type='A', name=inputData['asset_name'],
                         in_use=inputData['in_use'], code_index='')
-            Code.add(Code, code)
+            result = Code.add(Code, code)
 
             if result:
-                return jsonify(ResponseFormat.true_return(ResponseFormat, OtherAsset.output(OtherAsset, result)))
+                return jsonify(ResponseFormat.true_return(ResponseFormat, OtherAsset.output(OtherAsset, outputData)))
             else:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to add asset data'))
         except Exception as error:
@@ -55,6 +56,7 @@ def init_other_asset_api(app):
 
                 other_asset.account_id = inputData['account_id']
                 other_asset.account_name = inputData['account_name']
+                other_asset.asset_type = inputData['asset_type']
                 other_asset.expected_spend = inputData['expected_spend']
                 other_asset.in_use = inputData['in_use']
                 other_asset.asset_index = inputData['asset_index']

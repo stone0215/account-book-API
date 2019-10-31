@@ -1,7 +1,7 @@
 ####
 # 分類預算檔
 ####
-from ..dao_base import DaoBase
+from ...dao_base import DaoBase
 
 db = DaoBase().getDB()
 
