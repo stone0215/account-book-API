@@ -40,17 +40,10 @@ def init_initial_api(app):
     def updateInitialSetting():
         try:
             inputData = request.get_json(force=True)
-
-            initial = InitialSetting.queryByKey(InitialSetting, inputData)
-            if initial is None:
-                return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
+            if InitialSetting.update(InitialSetting, inputData):
+                return jsonify(ResponseFormat.true_return(ResponseFormat, None))
             else:
-                initial.setting_value = inputData['setting_value']
-
-                if InitialSetting.update(InitialSetting):
-                    return jsonify(ResponseFormat.true_return(ResponseFormat, None))
-                else:
-                    return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to update initial data'))
+                return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to update initial data'))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 

@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlalchemy.sql.expression import bindparam
 
 from ...dao_base import DaoBase
 
@@ -51,12 +52,18 @@ class InitialSetting(db.Model):
         else:
             return False
 
-    def update(self):
-        self.setting_date = datetime.now()
+    def update(self, datas):
+        sql = 'UPDATE Initial_Setting SET setting_value=:1, setting_date=:2 WHERE code_id=:3 AND initial_type=:4'
 
-        if DaoBase.session_commit(self) == '':
+        params = []
+        try:
+            for item in datas:
+                params.append((item['setting_value'], datetime.now(),
+                               item['code_id'], item['initial_type']))
+
+            db.engine.execute(sql, params)
             return True
-        else:
+        except Exception as error:
             return False
 
     def delete(self, initial):
