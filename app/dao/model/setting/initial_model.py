@@ -40,7 +40,6 @@ class InitialSetting(db.Model):
         return db.engine.execute(''.join(sql))
 
     def queryByKey(self, initial):
-        print(initial)
         return self.query.filter_by(code_id=initial['code_id'], initial_type=initial['initial_type']).first()
 
     def add(self, initial):
@@ -53,11 +52,12 @@ class InitialSetting(db.Model):
             return False
 
     def update(self, datas):
-        sql = 'UPDATE Initial_Setting SET setting_value=:1, setting_date=:2 WHERE code_id=:3 AND initial_type=:4'
+        sql = 'UPDATE Initial_Setting SET setting_value=:1, setting_date=:2 WHERE code_id=:3 AND initial_type=:4 AND setting_value!=:1'
 
         params = []
         try:
             for item in datas:
+                # todo: search for better way to select before update
                 params.append((item['setting_value'], datetime.now(),
                                item['code_id'], item['initial_type']))
 
