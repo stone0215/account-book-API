@@ -1,4 +1,4 @@
-from sqlalchemy import desc, asc
+from sqlalchemy import desc, asc, or_
 
 from ...dao_base import DaoBase
 
@@ -50,8 +50,8 @@ class Code(db.Model):
 
         return db.engine.execute(''.join(sql))
 
-    def query4Selection(self):
-        return self.query.with_entities(self.code_id, self.name, self.code_type).filter_by(in_use='Y', code_group=None)
+    def query4BudgetSelection(self):
+        return self.query.with_entities(self.code_id, self.name, self.code_type).filter_by(in_use='Y', code_group=None).filter(or_(Code.code_type == 'S', Code.code_type == 'F')).all()
 
     def add(self, code):
         db.session.add(code)

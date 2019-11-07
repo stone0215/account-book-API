@@ -76,7 +76,6 @@ class Budget(db.Model):
         params = []
         try:
             for item in datas:
-                print(item.budget_year)
                 # todo: search for better way to select before update
                 params.append((item.budget_year, item.category_code, item.category_name, item.code_type, item.expected1, item.expected2, item.expected3, item.expected4,
                                item.expected5, item.expected6, item.expected7, item.expected8, item.expected9, item.expected10, item.expected11, item.expected12))
