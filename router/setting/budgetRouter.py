@@ -4,79 +4,58 @@ from flask import jsonify, request
 
 from api.response_format import ResponseFormat
 from app.dao.model.setting.budget_model import Budget
+from app.dao.model.setting.code_model import Code
 
 
 def init_budget_api(app):
-    @app.route('/budget', methods=['GET'])
-    def getBudgets():
+    @app.route('/budget/<string:this_year>', methods=['GET'])
+    def getBudgetsByYear(this_year):
         output = []
 
         try:
-            budgets = Budget.getAll(Budget)
+            budgets = Budget.queryByYear(Budget, this_year)
             for budget in budgets:
-                output.append(Budget.output(Budget, budget))
+                output.append(Budget.outputByYear(Budget, budget))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
             return jsonify(ResponseFormat.true_return(ResponseFormat, output))
 
-    @app.route('/budget/get-by-month/<string:year_month>', methods=['GET'])
-    def getBudgetsByMonth():
+    @app.route('/budget/year-range', methods=['GET'])
+    def getBudgetRange():
         output = []
 
         try:
-            budgets = Budget.queryByMonth(Budget, year_month)
-            for budget in budgets:
-                output.append(Budget.outputByMonth(Budget, budget))
+            budgetRange = Budget.getBudgetRange(Budget)
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
-            return jsonify(ResponseFormat.true_return(ResponseFormat, output))
-
-    @app.route('/budget', methods=['POST'])
-    def addBudget():
-        try:
-            # force=True 忽略mimetype，只接字串
-            inputData = request.get_json(force=True)
-            budget = Budget(year_month=inputData['year_month'], category_code=inputData['category_code'],
-                            category_name=inputData['category_name'], expected=inputData['expected'], actual=inputData['actual'])
-
-            result = Budget.add(Budget, budget)
-            if result:
-                return jsonify(ResponseFormat.true_return(ResponseFormat, Budget.output(Budget, result)))
-            else:
-                return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to add budget data'))
-        except Exception as error:
-            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+            return jsonify(ResponseFormat.true_return(ResponseFormat, Budget.outputRange(Budget, budgetRange)))
 
     @app.route('/budget', methods=['PUT'])
     def updateBudget():
         try:
             inputData = request.get_json(force=True)
-            budget = Budget.getByKey(Budget, inputData)
-            if budget is None:
-                return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
+            if Budget.update(Budget, inputData):
+                return jsonify(ResponseFormat.true_return(ResponseFormat, None))
             else:
-                budget.alarm_type = inputData['alarm_type']
-                budget.alarm_date = inputData['alarm_date']
-                budget.content = inputData['content']
-                if Budget.update(Budget):
-                    return jsonify(ResponseFormat.true_return(ResponseFormat, None))
-                else:
-                    return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to update budget data'))
+                return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to update budget data'))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 
-    @app.route('/budget/<int:alarmId>', methods=['DELETE'])
-    def deleteBudget(alarmId):
+    @app.route('/budget/<string:next_year>', methods=['POST'])
+    def bulkInsertBudget(next_year):
+        prepared_data = []
         try:
-            budget = Budget.getByKey(Budget, alarmId)
-            if budget is None:
-                return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
+            codes = Code.query4Selection(Code)
+
+            for code in codes:
+                prepared_data.append(
+                    Budget(budget_year=next_year, category_code=code.code_id, category_name=code.name, code_type=code.code_type))
+
+            if Budget.bulkInsert(Budget, prepared_data):
+                return jsonify(ResponseFormat.true_return(ResponseFormat, None))
             else:
-                if Budget.delete(Budget, alarmId):
-                    return jsonify(ResponseFormat.true_return(ResponseFormat, None))
-                else:
-                    return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to delete budget data'))
+                return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to bulk insert budget data'))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))

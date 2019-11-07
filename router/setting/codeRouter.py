@@ -4,6 +4,7 @@ from flask import jsonify, request
 
 from api.response_format import ResponseFormat
 from app.dao.model.setting.code_model import Code
+from app.dao.model.setting.budget_model import Budget
 
 
 def init_code_api(app):
@@ -30,6 +31,10 @@ def init_code_api(app):
 
             result = Code.add(Code, code)
             if result:
+                if inputData['code_type'] == 'F' or inputData['code_type'] == 'S':
+                    Budget.add(Budget, Budget(result.code_id,
+                                              result.name, result.code_type))
+
                 return jsonify(ResponseFormat.true_return(ResponseFormat, Code.outputMainCode(Code, result)))
             else:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to add code data'))

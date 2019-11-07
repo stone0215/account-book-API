@@ -50,6 +50,9 @@ class Code(db.Model):
 
         return db.engine.execute(''.join(sql))
 
+    def query4Selection(self):
+        return self.query.with_entities(self.code_id, self.name, self.code_type).filter_by(in_use='Y', code_group=None)
+
     def add(self, code):
         db.session.add(code)
         db.session.flush()

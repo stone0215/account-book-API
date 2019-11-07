@@ -171,12 +171,23 @@ CREATE TABLE IF NOT EXISTS Insurance_History (
 
 -- 預算設定檔
 CREATE TABLE IF NOT EXISTS Budget (
-	year_month CHARACTER(6),
-	category_code VARCHAR(10),
-	category_name NVARCHAR(60) NOT NULL,
-    expected DECIMAL(8,2) NOT NULL,
-    actual DECIMAL(8,2),
-	PRIMARY KEY (year_month, category_code)
+	budget_year CHARACTER(4), 
+	category_code VARCHAR(10), --對應 Code_Data.code_id
+	category_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
+	code_type CHARACTER(1) NOT NULL, -- 對應 Code_Data.code_type
+    expected1 DECIMAL(8,2) NOT NULL,
+	expected2 DECIMAL(8,2) NOT NULL,
+	expected3 DECIMAL(8,2) NOT NULL,
+	expected4 DECIMAL(8,2) NOT NULL,
+	expected5 DECIMAL(8,2) NOT NULL,
+	expected6 DECIMAL(8,2) NOT NULL,
+	expected7 DECIMAL(8,2) NOT NULL,
+	expected8 DECIMAL(8,2) NOT NULL,
+	expected9 DECIMAL(8,2) NOT NULL,
+	expected10 DECIMAL(8,2) NOT NULL,
+	expected11 DECIMAL(8,2) NOT NULL,
+	expected12 DECIMAL(8,2) NOT NULL,
+	PRIMARY KEY (budget_year, category_code)
 );
 
 -- 定期支出提醒設定檔
