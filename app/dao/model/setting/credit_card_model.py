@@ -16,14 +16,14 @@ class CreditCard(db.Model):
     note = db.Column(db.Text)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, card_name, last_day, charge_day, feedback_way, fx_code, in_use, note, credit_card_index=''):
+    def __init__(self, card_name, last_day, charge_day, feedback_way, fx_code, in_use, note, credit_card_index):
         self.card_name = card_name
         self.last_day = last_day
         self.charge_day = charge_day
         self.feedback_way = feedback_way  # C：現金/ P：紅利/ N：無
         self.fx_code = fx_code
         self.in_use = in_use  # Y/M
-        self.credit_card_index = credit_card_index
+        self.credit_card_index = credit_card_index or ''
         self.note = note
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
