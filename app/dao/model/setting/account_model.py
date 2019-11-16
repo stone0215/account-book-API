@@ -15,7 +15,7 @@ class Account(db.Model):
     account_index = db.Column(db.SmallInteger)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, name, account_type, fx_code, is_calculate, in_use, discount, account_index):
+    def __init__(self, name, account_type, fx_code, is_calculate, in_use, discount, account_index=''):
         self.name = name
         self.account_type = account_type  # N：一般帳戶/ F：財務規劃帳戶
         self.fx_code = fx_code

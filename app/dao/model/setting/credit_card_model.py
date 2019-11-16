@@ -16,7 +16,7 @@ class CreditCard(db.Model):
     note = db.Column(db.Text)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, card_name, last_day, charge_day, feedback_way, fx_code, in_use, note, credit_card_index=None):
+    def __init__(self, card_name, last_day, charge_day, feedback_way, fx_code, in_use, note, credit_card_index=''):
         self.card_name = card_name
         self.last_day = last_day
         self.charge_day = charge_day
