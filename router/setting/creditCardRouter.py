@@ -37,7 +37,7 @@ def init_credit_card_api(app):
 
             # 新增初始值
             initial = InitialSetting(code_id=credit_card.credit_card_id, code_name=credit_card.card_name,
-                                     code_type='C', setting_value=0)
+                                     initial_type='C', setting_value=0)
             result = InitialSetting.add(InitialSetting, initial)
 
             if result:
