@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS Initial_Setting (
 	initial_type CHARACTER(1) NOT NULL, -- 對應 Code_Data.code_type
 	setting_value VARCHAR(10) NOT NULL,
 	setting_date DATE NOT NULL,
-	PRIMARY KEY (code_id, code_type)
+	PRIMARY KEY (code_id, initial_type)
 );
 
 -- 年度目標設定檔
@@ -82,9 +82,12 @@ CREATE TABLE IF NOT EXISTS Credit_Card_Balance (
 -- 貸款設定檔
 CREATE TABLE IF NOT EXISTS Loan (
 	loan_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-	name NVARCHAR(60) NOT NULL,
+	loan_name NVARCHAR(60) NOT NULL,
+	account_id INTEGER NOT NULL,
+    account_name NVARCHAR(60) NOT NULL,
 	interest_rate DECIMAL(4,3) NOT NULL,
-    pay_day CHARACTER(2) NOT NULL
+    pay_day VARCHAR(5) NOT NULL,
+	loan_index TINYINT
 );
 
 -- 貸款餘額檔，關帳後寫入
