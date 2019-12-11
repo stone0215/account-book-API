@@ -2,10 +2,10 @@
 CREATE TABLE IF NOT EXISTS Initial_Setting (
 	code_id INTEGER, -- 對應 Code_Data.code_id 或 Account.account_id 或 Credit_Card.credit_card_id
     code_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
-	initial_type CHARACTER(1) NOT NULL, -- 對應 Code_Data.code_type
+	initial_type VARCHAR(10) NOT NULL, -- 對應 Code_Data.code_type
 	setting_value VARCHAR(10) NOT NULL,
 	setting_date DATE NOT NULL,
-	PRIMARY KEY (code_id, code_type)
+	PRIMARY KEY (code_id, initial_type)
 );
 
 -- 年度目標設定檔
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS Target_Setting (
 CREATE TABLE IF NOT EXISTS Account (
 	account_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	name NVARCHAR(60) NOT NULL,
-	account_type CHARACTER(1) NOT NULL,
+	account_type VARCHAR(10) NOT NULL,
 	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
     is_calculate CHARACTER(1) NOT NULL,
 	in_use CHARACTER(1) NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS FX_Rate (
 -- 代碼檔
 CREATE TABLE IF NOT EXISTS Code_Data (
 	code_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-	code_type CHARACTER(1) NOT NULL, --S：固定支出/ F：浮動支出/ I：收入/ A：資產
+	code_type VARCHAR(10) NOT NULL, --S：固定支出/ F：浮動支出/ I：收入/ A：資產
 	name NVARCHAR(60) NOT NULL,
 	code_group INTEGER, --如果是副選單，會寫入Code_Data.code_id
 	code_group_name NVARCHAR(60), --如果是副選單，會寫入Code_Data.name
@@ -109,43 +109,33 @@ CREATE INDEX IF NOT EXISTS Journal_spend_date_idx ON Journal (spend_date);
 
 -- 股票流水帳檔
 CREATE TABLE IF NOT EXISTS Stock_Journal (
-	code VARCHAR(10) NOT NULL,
-	name NVARCHAR(60) NOT NULL,
-	amount INT NOT NULL,
+	stock_code VARCHAR(10) NOT NULL,
+	stock_name NVARCHAR(60) NOT NULL,
+	stock_type VARCHAR(10) NOT NULL,
 	buy_date DATE NOT NULL,
 	sell_date DATE,
 	buy_price DECIMAL(7,3) NOT NULL,
     sell_price DECIMAL(7,3),
-    type CHARACTER(1) NOT NULL
+    gain_and_loss INT,
+	rate DECIMAL(5,2)
 );
-CREATE INDEX IF NOT EXISTS Stock_Journal_idx ON Stock_Journal (code, buy_date, type);
+CREATE INDEX IF NOT EXISTS Stock_Journal_idx ON Stock_Journal (stock_code, buy_date, stock_type);
 
--- 股票設定檔
-CREATE TABLE IF NOT EXISTS TStock_Data (
-	code VARCHAR(10) PRIMARY KEY,
-	name NVARCHAR(60) NOT NULL,
-	type CHARACTER(1) NOT NULL
-);
-
--- 台股歷史價格檔
-CREATE TABLE IF NOT EXISTS TStock_History (
-	code VARCHAR(10) PRIMARY KEY,
-	stock_date DATE NOT NULL,
-	price DECIMAL(7,3) NOT NULL
+-- 股票明細檔
+CREATE TABLE IF NOT EXISTS Stock_Detail (
+	stock_code VARCHAR(10) NOT NULL,
+	stock_type VARCHAR(10) NOT NULL,
+	excute_type VARCHAR(10) NOT NULL,
+	excute_amount INT NOT NULL,
+	excute_price DECIMAL(7,3) NOT NULL,
+	excute_date DATE NOT NULL
 );
 
--- 美股歷史價格檔
-CREATE TABLE IF NOT EXISTS UStock_History (
-	code VARCHAR(10) PRIMARY KEY,
-	stock_date DATE NOT NULL,
-	price DECIMAL(7,3) NOT NULL
-);
-
--- 保險設定檔
+-- 保險流水帳檔
 CREATE TABLE IF NOT EXISTS Insurance (
 	insurance_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	name NVARCHAR(60) NOT NULL,
-	insurance_type CHARACTER(1),
+	insurance_type VARCHAR(10),
 	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
     pay_day CHARACTER(2) NOT NULL
 );
@@ -174,7 +164,7 @@ CREATE TABLE IF NOT EXISTS Budget (
 	budget_year CHARACTER(4), 
 	category_code VARCHAR(10), --對應 Code_Data.code_id
 	category_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
-	code_type CHARACTER(1) NOT NULL, -- 對應 Code_Data.code_type
+	code_type VARCHAR(10) NOT NULL, -- 對應 Code_Data.code_type
     expected1 DECIMAL(8,2) NOT NULL,
 	expected2 DECIMAL(8,2) NOT NULL,
 	expected3 DECIMAL(8,2) NOT NULL,
@@ -193,7 +183,7 @@ CREATE TABLE IF NOT EXISTS Budget (
 -- 定期支出提醒設定檔
 CREATE TABLE IF NOT EXISTS Alarm (
     alarm_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-	alarm_type CHARACTER(1) NOT NULL,
+	alarm_type VARCHAR(10) NOT NULL,
 	alarm_date VARCHAR(5) NOT NULL,
     content NVARCHAR(60) NOT NULL
 );
@@ -202,7 +192,7 @@ CREATE TABLE IF NOT EXISTS Alarm (
 CREATE TABLE IF NOT EXISTS Other_Asset (
     asset_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	asset_name NVARCHAR(60) NOT NULL,
-	asset_type CHARACTER(1) NOT NULL,
+	asset_type VARCHAR(10) NOT NULL,
 	account_id INTEGER NOT NULL,
     account_name NVARCHAR(60) NOT NULL,
 	expected_spend INTEGER,
