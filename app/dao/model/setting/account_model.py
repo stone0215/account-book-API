@@ -22,7 +22,7 @@ class Account(db.Model):
         self.is_calculate = is_calculate
         self.in_use = in_use  # Y/M
         self.discount = discount
-        self.account_index = account_index
+        self.account_index = account_index or ''
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
