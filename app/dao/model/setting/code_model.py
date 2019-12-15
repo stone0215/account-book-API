@@ -22,7 +22,7 @@ class Code(db.Model):
         self.code_group = code_group
         self.code_group_name = code_group_name
         self.in_use = in_use  # Y/M
-        self.code_index = code_index
+        self.code_index = code_index or ''
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -32,12 +32,12 @@ class Code(db.Model):
         return self.query.filter_by(code_id=code_id).first()
 
     def querySubCodeList(self, parent_id):
-        return self.query.filter_by(code_group=parent_id)
+        return self.query.filter_by(code_group=parent_id).order_by(asc(self.code_index)).all()
 
     def queryByConditions(self, conditions):
         sql = []
         sql.append(
-            "SELECT code_id, name, code_type, in_use, code_index FROM Code_Data WHERE 1=1")
+            "SELECT code_id, name, code_type, in_use, code_index FROM Code_Data WHERE code_group IS NULL")
 
         if conditions.get('name') != '':
             sql.append(f" AND name LIKE '%{conditions.get('name')}%'")

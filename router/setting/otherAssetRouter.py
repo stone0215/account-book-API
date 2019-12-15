@@ -34,8 +34,9 @@ def init_other_asset_api(app):
                                      in_use=inputData['in_use'], asset_index=inputData['asset_index'])
             outputData = OtherAsset.add(OtherAsset, other_asset)
             # 新增代碼主選單
-            code = Code(code_type='A', name=inputData['asset_name'],
-                        in_use=inputData['in_use'], code_index='')
+            code = Code(code_type=inputData[
+                'asset_type'], name=inputData['asset_name'],
+                in_use=inputData['in_use'], code_index='')
             result = Code.add(Code, code)
 
             if result:

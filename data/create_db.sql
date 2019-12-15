@@ -86,7 +86,8 @@ CREATE TABLE IF NOT EXISTS Loan (
 	account_id INTEGER NOT NULL,
     account_name NVARCHAR(60) NOT NULL,
 	interest_rate DECIMAL(4,3) NOT NULL,
-    pay_day VARCHAR(5) NOT NULL,
+	apply_date DATE NOT NULL,
+    pay_day VARCHAR(2) NOT NULL,
 	loan_index TINYINT
 );
 
