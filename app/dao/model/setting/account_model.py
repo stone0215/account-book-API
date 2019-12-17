@@ -7,7 +7,7 @@ class Account(db.Model):
     __tablename__ = 'Account'
     account_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60), nullable=False, index=True)
-    account_type = db.Column(db.String(1), nullable=False, index=True)
+    account_type = db.Column(db.String(10), nullable=False, index=True)
     fx_code = db.Column(db.String(3), nullable=False)
     is_calculate = db.Column(db.String(1), nullable=False)
     in_use = db.Column(db.String(1), nullable=False, index=True)

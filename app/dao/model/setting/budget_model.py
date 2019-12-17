@@ -14,7 +14,7 @@ class Budget(db.Model):
     budget_year = db.Column(db.String(6), primary_key=True)
     category_code = db.Column(db.String(10), primary_key=True)
     category_name = db.Column(db.String(60), nullable=False)
-    code_type = db.Column(db.String(1), nullable=False, index=True)
+    code_type = db.Column(db.String(10), nullable=False, index=True)
     expected1 = db.Column(db.Float, nullable=False)
     expected2 = db.Column(db.Float, nullable=False)
     expected3 = db.Column(db.Float, nullable=False)

@@ -9,6 +9,7 @@ class CreditCard(db.Model):
     card_name = db.Column(db.String(60), nullable=False, index=True)
     last_day = db.Column(db.String(2), nullable=False)
     charge_day = db.Column(db.String(2), nullable=False)
+    limit_date = db.Column(db.DateTime, nullable=False)
     feedback_way = db.Column(db.String(1), nullable=False)
     fx_code = db.Column(db.String(3), nullable=False)
     in_use = db.Column(db.String(1), nullable=False, index=True)
@@ -16,10 +17,11 @@ class CreditCard(db.Model):
     note = db.Column(db.Text)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, card_name, last_day, charge_day, feedback_way, fx_code, in_use, note, credit_card_index):
+    def __init__(self, card_name, last_day, charge_day, limit_date, feedback_way, fx_code, in_use, note, credit_card_index):
         self.card_name = card_name
         self.last_day = last_day
         self.charge_day = charge_day
+        self.limit_date = limit_date
         self.feedback_way = feedback_way  # C：現金/ P：紅利/ N：無
         self.fx_code = fx_code
         self.in_use = in_use  # Y/M
@@ -57,7 +59,8 @@ class CreditCard(db.Model):
 
     def add(self, credit_card):
         db.session.add(credit_card)
-        db.session.flush()
+        # db.session.flush()
+        print(DaoBase.session_commit(self))  # print sql string
 
         return credit_card
 
@@ -80,6 +83,7 @@ class CreditCard(db.Model):
             'card_name': credit_card.card_name,
             'last_day': credit_card.last_day,
             'charge_day': credit_card.charge_day,
+            'limit_date': credit_card.limit_date,
             'feedback_way': credit_card.feedback_way,
             'fx_code': credit_card.fx_code,
             'in_use': credit_card.in_use,

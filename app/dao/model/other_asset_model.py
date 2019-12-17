@@ -1,6 +1,6 @@
 from sqlalchemy import asc
 
-from ...dao_base import DaoBase
+from ..dao_base import DaoBase
 
 db = DaoBase().getDB()
 
@@ -9,10 +9,10 @@ class OtherAsset(db.Model):
     __tablename__ = 'Other_Asset'
     asset_id = db.Column(db.Integer, primary_key=True)
     asset_name = db.Column(db.String(60), nullable=False)
-    asset_type = db.Column(db.String(1), nullable=False)
+    asset_type = db.Column(db.String(10), nullable=False)
     account_id = db.Column(db.Integer, nullable=False)
     account_name = db.Column(db.String(60), nullable=False)
-    expected_spend = db.Column(db.Float, nullable=False)
+    expected_spend = db.Column(db.Float)
     in_use = db.Column(db.String(1), nullable=False)
     asset_index = db.Column(db.SmallInteger, index=True)
 
@@ -22,7 +22,7 @@ class OtherAsset(db.Model):
         self.account_id = account_id
         self.asset_type = asset_type
         self.account_name = account_name
-        self.expected_spend = expected_spend
+        self.expected_spend = expected_spend if expected_spend else None
         self.in_use = in_use  # Y/M
         self.asset_index = asset_index
 
@@ -35,6 +35,9 @@ class OtherAsset(db.Model):
 
     def queryByKey(self, asset_id):
         return self.query.filter_by(asset_id=asset_id).first()
+
+    def getDistinctItems(self):
+        return self.query.with_entities(self.asset_id, self.asset_name, self.asset_type).filter_by(in_use='Y').distinct().all()
 
     def add(self, other_asset):
         db.session.add(other_asset)
@@ -65,4 +68,11 @@ class OtherAsset(db.Model):
             'expected_spend': asset.expected_spend,
             'in_use': asset.in_use,
             'asset_index': asset.asset_index
+        }
+
+    def output4Item(self, asset):
+        return {
+            'asset_id': asset.asset_id,
+            'asset_name': asset.asset_name,
+            'asset_type': asset.asset_type
         }

@@ -27,7 +27,7 @@ def init_account_api(app):
         try:
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
-            
+
             # 新增帳戶
             account = Account(name=inputData['name'], account_type=inputData['account_type'],
                               fx_code=inputData['fx_code'], is_calculate=inputData['is_calculate'],
@@ -36,7 +36,7 @@ def init_account_api(app):
 
             # 新增初始值
             initial = InitialSetting(code_id=account.account_id, code_name=account.name,
-                                     initial_type='A', setting_value=0)
+                                     initial_type='Account', setting_value=0)
             result = InitialSetting.add(InitialSetting, initial)
 
             if result:

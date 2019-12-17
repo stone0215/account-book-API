@@ -9,7 +9,7 @@ class Code(db.Model):
     __tablename__ = 'Code_Data'
     code_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60), nullable=False, index=True)
-    code_type = db.Column(db.String(1), nullable=False, index=True)
+    code_type = db.Column(db.String(10), nullable=False, index=True)
     code_group = db.Column(db.Integer)
     code_group_name = db.Column(db.String(60))
     in_use = db.Column(db.String(1), nullable=False, index=True)

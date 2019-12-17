@@ -31,7 +31,7 @@ def init_code_api(app):
 
             result = Code.add(Code, code)
             if result:
-                if inputData['code_type'] == 'F' or inputData['code_type'] == 'S':
+                if inputData['code_type'] == 'Floating' or inputData['code_type'] == 'Fixed':
                     Budget.add(Budget, Budget(result.code_id,
                                               result.name, result.code_type))
 

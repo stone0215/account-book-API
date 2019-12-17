@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS Credit_Card (
 	card_name NVARCHAR(60) NOT NULL,
 	last_day CHARACTER(2) NOT NULL,
     charge_day CHARACTER(2) NOT NULL,
+	limit_date DATE NOT NULL,
     feedback_way CHARACTER(1) NOT NULL, --C：現金/ P：紅利/ N：無
 	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
 	in_use CHARACTER(1) NOT NULL,
@@ -83,8 +84,8 @@ CREATE TABLE IF NOT EXISTS Credit_Card_Balance (
 CREATE TABLE IF NOT EXISTS Loan (
 	loan_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	loan_name NVARCHAR(60) NOT NULL,
-	account_id INTEGER NOT NULL,
-    account_name NVARCHAR(60) NOT NULL,
+	account_id INTEGER NOT NULL, -- 對應 Account.account_id
+    account_name NVARCHAR(60) NOT NULL, -- 對應 Account.name
 	interest_rate DECIMAL(4,3) NOT NULL,
 	apply_date DATE NOT NULL,
     pay_day VARCHAR(2) NOT NULL,

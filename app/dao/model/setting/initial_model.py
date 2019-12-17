@@ -10,7 +10,7 @@ class InitialSetting(db.Model):
     __tablecode_name__ = 'Initial_Setting'
     code_id = db.Column(db.Integer, primary_key=True)
     code_name = db.Column(db.String(60), nullable=False)
-    initial_type = db.Column(db.String(1), nullable=False, index=True)
+    initial_type = db.Column(db.String(10), nullable=False, index=True)
     setting_value = db.Column(db.Float, nullable=False)
     setting_date = db.Column(db.DateTime, nullable=False)
 
