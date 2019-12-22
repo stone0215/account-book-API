@@ -51,7 +51,7 @@ class Code(db.Model):
         return db.engine.execute(''.join(sql))
 
     def query4BudgetSelection(self):
-        return self.query.with_entities(self.code_id, self.name, self.code_type).filter_by(in_use='Y', code_group=None).filter(or_(Code.code_type == 'S', Code.code_type == 'F')).all()
+        return self.query.with_entities(self.code_id, self.name, self.code_type).filter_by(in_use='Y', code_group=None).filter(or_(Code.code_type == 'Fixed', Code.code_type == 'Floating')).all()
 
     def add(self, code):
         db.session.add(code)

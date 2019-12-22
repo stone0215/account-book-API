@@ -94,5 +94,6 @@ class CreditCard(db.Model):
     def output4Selection(self, credit_card):
         return {
             'key': credit_card.credit_card_id,
-            'value': credit_card.card_name
+            'value': credit_card.card_name,
+            'type': 'CreditCard'
         }

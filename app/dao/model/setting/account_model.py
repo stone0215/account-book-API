@@ -86,5 +86,6 @@ class Account(db.Model):
     def output4Selection(self, Account):
         return {
             'key': Account.account_id,
-            'value': Account.name
+            'value': Account.name,
+            'type': 'Account'
         }

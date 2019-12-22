@@ -19,7 +19,6 @@ def init_util_api(app):
                 selections.append(Account.output4Selection(Account, account))
             output.append({
                 'title': '帳戶',
-                'type': 'A',
                 'selections': selections
             })
 
@@ -31,7 +30,6 @@ def init_util_api(app):
                     CreditCard.output4Selection(CreditCard, card))
             output.append({
                 'title': '信用卡',
-                'type': 'C',
                 'selections': selections
             })
 
