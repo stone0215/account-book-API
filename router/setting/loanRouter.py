@@ -1,9 +1,12 @@
 # -*- coding: UTF-8 -*-
 
+from datetime import datetime
 from flask import jsonify, request
 
 from api.response_format import ResponseFormat
 from app.dao.model.setting.loan_model import Loan
+
+date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
 def init_loan_api(app):
@@ -22,6 +25,8 @@ def init_loan_api(app):
 
     @app.route('/loan', methods=['POST'])
     def addLoan():
+        global date_format
+
         try:
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
@@ -29,11 +34,12 @@ def init_loan_api(app):
             # 新增其他資產
             loan = Loan(loan_name=inputData['loan_name'], account_id=inputData['account_id'],
                         account_name=inputData['account_name'], interest_rate=inputData[
-                            'interest_rate'], apply_date=inputData['apply_date'],
+                            'interest_rate'], apply_date=datetime.strptime(inputData['apply_date'], date_format),
                         pay_day=inputData['pay_day'], loan_index=inputData['loan_index'])
 
-            if Loan.add(Loan, loan):
-                return jsonify(ResponseFormat.true_return(ResponseFormat, Loan.output(Loan, outputData)))
+            result = Loan.add(Loan, loan)
+            if result:
+                return jsonify(ResponseFormat.true_return(ResponseFormat, Loan.output(Loan, result)))
             else:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to add asset data'))
         except Exception as error:
@@ -41,20 +47,25 @@ def init_loan_api(app):
 
     @app.route('/loan/<int:loan_id>', methods=['PUT'])
     def updateLoan(loan_id):
+
         try:
             loan = Loan.queryByKey(Loan, loan_id)
+
             if loan is None:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
             else:
+                global date_format
                 inputData = request.get_json(force=True)
 
                 loan.loan_name = inputData['loan_name']
                 loan.account_id = inputData['account_id']
                 loan.account_name = inputData['account_name']
                 loan.interest_rate = inputData['interest_rate']
-                loan.apply_date = inputData['apply_date']
+                loan.apply_date = datetime.strptime(
+                    inputData['apply_date'], date_format)
                 loan.pay_day = inputData['pay_day']
                 loan.loan_index = inputData['loan_index']
+
                 if Loan.update(Loan):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
                 else:

@@ -139,10 +139,13 @@ CREATE TABLE IF NOT EXISTS Stock_Detail (
 -- 保險流水帳檔
 CREATE TABLE IF NOT EXISTS Insurance (
 	insurance_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-	name NVARCHAR(60) NOT NULL,
-	insurance_type VARCHAR(10),
-	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
-    pay_day CHARACTER(2) NOT NULL
+	insurance_name NVARCHAR(60) NOT NULL,
+	insurance_type VARCHAR(10) NOT NULL,
+	create_date DATE NOT NULL,
+	pay_type VARCHAR(10) NOT NULL,
+    pay_day VARCHAR(23) NOT NULL,
+	expected_pay INTEGER NOT NULL,
+	insurance_index TINYINT
 );
 
 -- 保險餘額檔，關帳後如有異動才寫入，因為不一定是月繳

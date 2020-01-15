@@ -59,8 +59,7 @@ class CreditCard(db.Model):
 
     def add(self, credit_card):
         db.session.add(credit_card)
-        # db.session.flush()
-        print(DaoBase.session_commit(self))  # print sql string
+        db.session.flush()
 
         return credit_card
 
