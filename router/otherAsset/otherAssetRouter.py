@@ -4,7 +4,7 @@ from flask import jsonify, request
 
 from api.response_format import ResponseFormat
 from app.dao.model.setting.code_model import Code
-from app.dao.model.other_asset_model import OtherAsset
+from app.dao.model.otherAsset.other_asset_model import OtherAsset
 
 
 def init_other_asset_api(app):

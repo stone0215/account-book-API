@@ -114,27 +114,33 @@ CREATE INDEX IF NOT EXISTS Journal_spend_date_idx ON Journal (spend_date);
 
 -- 股票流水帳檔
 CREATE TABLE IF NOT EXISTS Stock_Journal (
+	stock_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	stock_code VARCHAR(10) NOT NULL,
 	stock_name NVARCHAR(60) NOT NULL,
-	stock_type VARCHAR(10) NOT NULL,
-	buy_date DATE NOT NULL,
-	sell_date DATE,
-	buy_price DECIMAL(7,3) NOT NULL,
-    sell_price DECIMAL(7,3),
-    gain_and_loss INT,
-	rate DECIMAL(5,2)
+	asset_id INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS Stock_Journal_idx ON Stock_Journal (stock_code, buy_date, stock_type);
 
 -- 股票明細檔
 CREATE TABLE IF NOT EXISTS Stock_Detail (
-	stock_code VARCHAR(10) NOT NULL,
-	stock_type VARCHAR(10) NOT NULL,
-	excute_type VARCHAR(10) NOT NULL,
-	excute_amount INT NOT NULL,
+	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	stock_id INTEGER,
+	excute_type VARCHAR(10) NOT NULL, -- buy:買入/ sell:賣出/ stock:配股/ cash:配息
+	excute_amount INT NOT NULL, --以股為單位
 	excute_price DECIMAL(7,3) NOT NULL,
 	excute_date DATE NOT NULL
 );
+CREATE INDEX IF NOT EXISTS Stock_Detail_idx ON Stock_Detail (stock_id, excute_date);
+
+-- 股票歷史價格檔
+CREATE TABLE IF NOT EXISTS Stock_Price_History (
+	stock_code VARCHAR(10) NOT NULL,
+	fetch_date DATE NOT NULL,
+	open_price DECIMAL(7,3),
+	highest_price DECIMAL(7,3),
+	lowest_price DECIMAL(7,3),
+	close_price DECIMAL(7,3) NOT NULL
+);
+CREATE INDEX IF NOT EXISTS Stock_Price_History_idx ON Stock_Price_History (stock_code, fetch_date);
 
 -- 保險流水帳檔
 CREATE TABLE IF NOT EXISTS Insurance (

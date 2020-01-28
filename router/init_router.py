@@ -9,7 +9,8 @@ from .setting.codeRouter import init_code_api
 from .setting.creditCardRouter import init_credit_card_api
 from .setting.initialRouter import init_initial_api
 from .setting.loanRouter import init_loan_api
-from .otherAssetRouter import init_other_asset_api
+from .otherAsset.otherAssetRouter import init_other_asset_api
+from .otherAsset.stockAssetRouter import init_stock_asset_api
 from .utilRouter import init_util_api
 
 
@@ -30,4 +31,5 @@ def init(app):
     init_initial_api(app)
     init_loan_api(app)
     init_other_asset_api(app)
+    init_stock_asset_api(app)
     init_util_api(app)
