@@ -36,11 +36,14 @@ class StockDetail(db.Model):
     def queryByStockId(self, stock_id):
         return self.query.filter_by(stock_id=stock_id)
 
-    def add(self, other_asset):
-        db.session.add(other_asset)
+    def add(self, stock_asset):
+        db.session.add(stock_asset)
         db.session.flush()
 
-        return other_asset
+        if DaoBase.session_commit(self) == '':
+            return stock_asset
+        else:
+            return False
 
     def update(self):
         if DaoBase.session_commit(self) == '':

@@ -125,8 +125,8 @@ CREATE TABLE IF NOT EXISTS Stock_Detail (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	stock_id INTEGER,
 	excute_type VARCHAR(10) NOT NULL, -- buy:買入/ sell:賣出/ stock:配股/ cash:配息
-	excute_amount INT NOT NULL, --以股為單位
-	excute_price DECIMAL(7,3) NOT NULL,
+	excute_amount INT, --以股為單位
+	excute_price DECIMAL(7,3),
 	excute_date DATE NOT NULL
 );
 CREATE INDEX IF NOT EXISTS Stock_Detail_idx ON Stock_Detail (stock_id, excute_date);
