@@ -1,5 +1,7 @@
 from datetime import datetime
 from sqlalchemy import asc
+import requests
+import json
 
 from ...dao_base import DaoBase
 
@@ -106,12 +108,16 @@ class StockJournal(db.Model):
             return False
 
     def output4View(self, stock):
+        response = requests.get(
+            '??' % (stock.stock_code, datetime.now().strftime("%Y/%m/%d")))
+        data = response.json()['data']
+
         return {
             'stock_id': stock.stock_id,
             'stock_code': stock.stock_code,
             'stock_name': stock.stock_name,
             'asset_id': stock.asset_id,
-            'now_price': stock.now_price,
+            'now_price': data['price'],
             'hold_amount': stock.hold_amount,
             'sold_amount': stock.sold_amount,
             'buy_price': stock.buy_price,
