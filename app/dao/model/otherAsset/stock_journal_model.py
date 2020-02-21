@@ -14,12 +14,18 @@ class StockJournal(db.Model):
     stock_code = db.Column(db.String(10), nullable=False)
     stock_name = db.Column(db.String(60), nullable=False)
     asset_id = db.Column(db.Integer, nullable=False)
+    account_id = db.Column(db.Integer, nullable=False)
+    account_name = db.Column(db.String(60), nullable=False)
+    expected_spend = db.Column(db.Float)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, stock_name, stock_code, asset_id):
+    def __init__(self, stock_name, stock_code, asset_id, account_id, account_name, expected_spend):
         self.stock_name = stock_name
         self.asset_id = asset_id
         self.stock_code = stock_code
+        self.account_id = account_id
+        self.account_name = account_name
+        self.expected_spend = expected_spend if expected_spend else None
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -108,8 +114,9 @@ class StockJournal(db.Model):
             return False
 
     def output4View(self, stock):
-        response = requests.get(
-            '??' % (stock.stock_code, datetime.now().strftime("%Y/%m/%d")))
+        payload = {'action': 'single_stock_close', 'code': stock.stock_code,
+                   'date': datetime.now().strftime("%Y/%m/%d")}
+        response = requests.get('??', params=payload)
         data = response.json()['data']
 
         return {
@@ -117,6 +124,9 @@ class StockJournal(db.Model):
             'stock_code': stock.stock_code,
             'stock_name': stock.stock_name,
             'asset_id': stock.asset_id,
+            'account_id': stock.account_id,
+            'account_name': stock.account_name,
+            'expected_spend': stock.expected_spend,
             'now_price': data['price'],
             'hold_amount': stock.hold_amount,
             'sold_amount': stock.sold_amount,

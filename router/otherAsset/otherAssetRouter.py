@@ -41,10 +41,8 @@ def init_other_asset_api(app):
             inputData = request.get_json(force=True)
 
             # 新增其他資產
-            other_asset = OtherAsset(asset_name=inputData['asset_name'], account_id=inputData['account_id'],
-                                     account_name=inputData['account_name'], asset_type=inputData[
-                                         'asset_type'], expected_spend=inputData['expected_spend'],
-                                     in_use=inputData['in_use'], asset_index=inputData['asset_index'])
+            other_asset = OtherAsset(asset_name=inputData['asset_name'],  asset_type=inputData[
+                'asset_type'], in_use=inputData['in_use'], asset_index=inputData['asset_index'])
             outputData = OtherAsset.add(OtherAsset, other_asset)
             # 新增代碼主選單
             code = Code(code_type='Asset', name=inputData['asset_name'],
@@ -67,10 +65,7 @@ def init_other_asset_api(app):
             else:
                 inputData = request.get_json(force=True)
 
-                other_asset.account_id = inputData['account_id']
-                other_asset.account_name = inputData['account_name']
                 other_asset.asset_type = inputData['asset_type']
-                other_asset.expected_spend = inputData['expected_spend'] if inputData['expected_spend'] else None
                 other_asset.in_use = inputData['in_use']
                 other_asset.asset_index = inputData['asset_index']
                 if OtherAsset.update(OtherAsset):

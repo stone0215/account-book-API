@@ -32,7 +32,8 @@ def init_stock_asset_api(app):
             inputData = request.get_json(force=True)
 
             stock_asset = StockJournal(stock_code=inputData['stock_code'], stock_name=inputData['stock_name'],
-                                       asset_id=inputData['asset_id'])
+                                       asset_id=inputData['asset_id'], account_id=inputData['account_id'],
+                                       account_name=inputData['account_name'], expected_spend=inputData['expected_spend'])
             result = StockJournal.add(StockJournal, stock_asset)
 
             if result:
@@ -52,6 +53,9 @@ def init_stock_asset_api(app):
                 inputData = request.get_json(force=True)
 
                 stock_asset.stock_name = inputData['stock_name']
+                other_asset.account_id = inputData['account_id']
+                other_asset.account_name = inputData['account_name']
+                other_asset.expected_spend = inputData['expected_spend'] if inputData['expected_spend'] else None
                 if StockJournal.update(StockJournal):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
                 else:

@@ -1,20 +1,3 @@
--- 初始金額設定檔
-CREATE TABLE IF NOT EXISTS Initial_Setting (
-	code_id INTEGER, -- 對應 Code_Data.code_id 或 Account.account_id 或 Credit_Card.credit_card_id
-    code_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
-	initial_type VARCHAR(10) NOT NULL, -- 對應 Code_Data.code_type
-	setting_value VARCHAR(10) NOT NULL,
-	setting_date DATE NOT NULL,
-	PRIMARY KEY (code_id, initial_type)
-);
-
--- 年度目標設定檔
-CREATE TABLE IF NOT EXISTS Target_Setting (
-	target_year SMALLINT PRIMARY KEY,
-    name NVARCHAR(60) NOT NULL,
-	setting_value NVARCHAR(45) NOT NULL -- 描述該年度目標
-);
-
 -- 帳戶設定檔
 CREATE TABLE IF NOT EXISTS Account (
 	account_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
@@ -37,13 +20,33 @@ CREATE TABLE IF NOT EXISTS Account_Balance (
 	PRIMARY KEY (account_id, balance_month)
 );
 
--- 歷史匯率檔，當天有撈才會寫入
-CREATE TABLE IF NOT EXISTS FX_Rate (
-	import_date DATETIME,
-	code CHARACTER(3),
-	buy_rate DECIMAL(5,2) NOT NULL,
-    sell_rate DECIMAL(5,2) NOT NULL,
-	PRIMARY KEY (import_date, code)
+-- 定期支出提醒設定檔
+CREATE TABLE IF NOT EXISTS Alarm (
+    alarm_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	alarm_type VARCHAR(10) NOT NULL,
+	alarm_date VARCHAR(5) NOT NULL,
+    content NVARCHAR(60) NOT NULL
+);
+
+-- 預算設定檔
+CREATE TABLE IF NOT EXISTS Budget (
+	budget_year CHARACTER(4), 
+	category_code VARCHAR(10), --對應 Code_Data.code_id
+	category_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
+	code_type VARCHAR(10) NOT NULL, -- 對應 Code_Data.code_type
+    expected1 DECIMAL(8,2) NOT NULL,
+	expected2 DECIMAL(8,2) NOT NULL,
+	expected3 DECIMAL(8,2) NOT NULL,
+	expected4 DECIMAL(8,2) NOT NULL,
+	expected5 DECIMAL(8,2) NOT NULL,
+	expected6 DECIMAL(8,2) NOT NULL,
+	expected7 DECIMAL(8,2) NOT NULL,
+	expected8 DECIMAL(8,2) NOT NULL,
+	expected9 DECIMAL(8,2) NOT NULL,
+	expected10 DECIMAL(8,2) NOT NULL,
+	expected11 DECIMAL(8,2) NOT NULL,
+	expected12 DECIMAL(8,2) NOT NULL,
+	PRIMARY KEY (budget_year, category_code)
 );
 
 -- 代碼檔
@@ -80,67 +83,24 @@ CREATE TABLE IF NOT EXISTS Credit_Card_Balance (
 	PRIMARY KEY (credit_card_id, balance_month)
 );
 
--- 貸款設定檔
-CREATE TABLE IF NOT EXISTS Loan (
-	loan_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-	loan_name NVARCHAR(60) NOT NULL,
-	account_id INTEGER NOT NULL, -- 對應 Account.account_id
-    account_name NVARCHAR(60) NOT NULL, -- 對應 Account.name
-	interest_rate DECIMAL(4,3) NOT NULL,
-	apply_date DATE NOT NULL,
-    pay_day VARCHAR(2) NOT NULL,
-	loan_index TINYINT
+-- 歷史匯率檔，當天有撈才會寫入
+CREATE TABLE IF NOT EXISTS FX_Rate (
+	import_date DATETIME,
+	code CHARACTER(3),
+	buy_rate DECIMAL(5,2) NOT NULL,
+    sell_rate DECIMAL(5,2) NOT NULL,
+	PRIMARY KEY (import_date, code)
 );
 
--- 貸款餘額檔，關帳後寫入
-CREATE TABLE IF NOT EXISTS Loan_Balance (
-	loan_id INTEGER, -- 對應 Loan.loan_id
-	balance_month CHARACTER(6),
-	name NVARCHAR(60) NOT NULL, -- 對應 Loan.name
-    balance DECIMAL(8,2) NOT NULL,
-	PRIMARY KEY (loan_id, balance_month)
+-- 初始金額設定檔
+CREATE TABLE IF NOT EXISTS Initial_Setting (
+	code_id INTEGER, -- 對應 Code_Data.code_id 或 Account.account_id 或 Credit_Card.credit_card_id
+    code_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
+	initial_type VARCHAR(10) NOT NULL, -- 對應 Code_Data.code_type
+	setting_value VARCHAR(10) NOT NULL,
+	setting_date DATE NOT NULL,
+	PRIMARY KEY (code_id, initial_type)
 );
-
--- 流水帳檔
-CREATE TABLE IF NOT EXISTS Journal (
-	spend_date DATE NOT NULL,
-	spend_way VARCHAR(10) NOT NULL,
-	action_main VARCHAR(10) NOT NULL,
-    action_sub VARCHAR(10) NOT NULL,
-    spending DECIMAL(8,2) NOT NULL,
-    note TEXT
-);
-CREATE INDEX IF NOT EXISTS Journal_spend_date_idx ON Journal (spend_date);
-
--- 股票流水帳檔
-CREATE TABLE IF NOT EXISTS Stock_Journal (
-	stock_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-	stock_code VARCHAR(10) NOT NULL,
-	stock_name NVARCHAR(60) NOT NULL,
-	asset_id INTEGER NOT NULL
-);
-
--- 股票明細檔
-CREATE TABLE IF NOT EXISTS Stock_Detail (
-	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-	stock_id INTEGER,
-	excute_type VARCHAR(10) NOT NULL, -- buy:買入/ sell:賣出/ stock:配股/ cash:配息
-	excute_amount INT, --以股為單位
-	excute_price DECIMAL(7,3),
-	excute_date DATE NOT NULL
-);
-CREATE INDEX IF NOT EXISTS Stock_Detail_idx ON Stock_Detail (stock_id, excute_date);
-
--- 股票歷史價格檔
-CREATE TABLE IF NOT EXISTS Stock_Price_History (
-	stock_code VARCHAR(10) NOT NULL,
-	fetch_date DATE NOT NULL,
-	open_price DECIMAL(7,3),
-	highest_price DECIMAL(7,3),
-	lowest_price DECIMAL(7,3),
-	close_price DECIMAL(7,3) NOT NULL
-);
-CREATE INDEX IF NOT EXISTS Stock_Price_History_idx ON Stock_Price_History (stock_code, fetch_date);
 
 -- 保險流水帳檔
 CREATE TABLE IF NOT EXISTS Insurance (
@@ -173,33 +133,36 @@ CREATE TABLE IF NOT EXISTS Insurance_History (
 	PRIMARY KEY (insurance_id, year)
 );
 
--- 預算設定檔
-CREATE TABLE IF NOT EXISTS Budget (
-	budget_year CHARACTER(4), 
-	category_code VARCHAR(10), --對應 Code_Data.code_id
-	category_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
-	code_type VARCHAR(10) NOT NULL, -- 對應 Code_Data.code_type
-    expected1 DECIMAL(8,2) NOT NULL,
-	expected2 DECIMAL(8,2) NOT NULL,
-	expected3 DECIMAL(8,2) NOT NULL,
-	expected4 DECIMAL(8,2) NOT NULL,
-	expected5 DECIMAL(8,2) NOT NULL,
-	expected6 DECIMAL(8,2) NOT NULL,
-	expected7 DECIMAL(8,2) NOT NULL,
-	expected8 DECIMAL(8,2) NOT NULL,
-	expected9 DECIMAL(8,2) NOT NULL,
-	expected10 DECIMAL(8,2) NOT NULL,
-	expected11 DECIMAL(8,2) NOT NULL,
-	expected12 DECIMAL(8,2) NOT NULL,
-	PRIMARY KEY (budget_year, category_code)
+-- 流水帳檔
+CREATE TABLE IF NOT EXISTS Journal (
+	spend_date DATE NOT NULL,
+	spend_way VARCHAR(10) NOT NULL,
+	action_main VARCHAR(10) NOT NULL,
+    action_sub VARCHAR(10) NOT NULL,
+    spending DECIMAL(8,2) NOT NULL,
+    note TEXT
+);
+CREATE INDEX IF NOT EXISTS Journal_spend_date_idx ON Journal (spend_date);
+
+-- 貸款設定檔
+CREATE TABLE IF NOT EXISTS Loan (
+	loan_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	loan_name NVARCHAR(60) NOT NULL,
+	account_id INTEGER NOT NULL, -- 對應 Account.account_id
+    account_name NVARCHAR(60) NOT NULL, -- 對應 Account.name
+	interest_rate DECIMAL(4,3) NOT NULL,
+	apply_date DATE NOT NULL,
+    pay_day VARCHAR(2) NOT NULL,
+	loan_index TINYINT
 );
 
--- 定期支出提醒設定檔
-CREATE TABLE IF NOT EXISTS Alarm (
-    alarm_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-	alarm_type VARCHAR(10) NOT NULL,
-	alarm_date VARCHAR(5) NOT NULL,
-    content NVARCHAR(60) NOT NULL
+-- 貸款餘額檔，關帳後寫入
+CREATE TABLE IF NOT EXISTS Loan_Balance (
+	loan_id INTEGER, -- 對應 Loan.loan_id
+	balance_month CHARACTER(6),
+	name NVARCHAR(60) NOT NULL, -- 對應 Loan.name
+    balance DECIMAL(8,2) NOT NULL,
+	PRIMARY KEY (loan_id, balance_month)
 );
 
 -- 其他資產設定檔
@@ -207,9 +170,46 @@ CREATE TABLE IF NOT EXISTS Other_Asset (
     asset_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	asset_name NVARCHAR(60) NOT NULL,
 	asset_type VARCHAR(10) NOT NULL,
-	account_id INTEGER NOT NULL,
-    account_name NVARCHAR(60) NOT NULL,
-	expected_spend INTEGER,
 	in_use CHARACTER(1) NOT NULL,
 	asset_index TINYINT
+);
+
+-- 股票流水帳檔
+CREATE TABLE IF NOT EXISTS Stock_Journal (
+	stock_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	stock_code VARCHAR(10) NOT NULL,
+	stock_name NVARCHAR(60) NOT NULL,
+	asset_id INTEGER NOT NULL,
+	account_id INTEGER NOT NULL,
+    account_name NVARCHAR(60) NOT NULL,
+	expected_spend INTEGER
+);
+
+-- 股票明細檔
+CREATE TABLE IF NOT EXISTS Stock_Detail (
+	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	stock_id INTEGER,
+	excute_type VARCHAR(10) NOT NULL, -- buy:買入/ sell:賣出/ stock:配股/ cash:配息
+	excute_amount INT, --以股為單位
+	excute_price DECIMAL(7,3),
+	excute_date DATE NOT NULL
+);
+CREATE INDEX IF NOT EXISTS Stock_Detail_idx ON Stock_Detail (stock_id, excute_date);
+
+-- 股票歷史價格檔
+CREATE TABLE IF NOT EXISTS Stock_Price_History (
+	stock_code VARCHAR(10) NOT NULL,
+	fetch_date DATE NOT NULL,
+	open_price DECIMAL(7,3),
+	highest_price DECIMAL(7,3),
+	lowest_price DECIMAL(7,3),
+	close_price DECIMAL(7,3) NOT NULL
+);
+CREATE INDEX IF NOT EXISTS Stock_Price_History_idx ON Stock_Price_History (stock_code, fetch_date);
+
+-- 年度目標設定檔
+CREATE TABLE IF NOT EXISTS Target_Setting (
+	target_year SMALLINT PRIMARY KEY,
+    name NVARCHAR(60) NOT NULL,
+	setting_value NVARCHAR(45) NOT NULL -- 描述該年度目標
 );
