@@ -192,7 +192,8 @@ CREATE TABLE IF NOT EXISTS Stock_Detail (
 	excute_type VARCHAR(10) NOT NULL, -- buy:買入/ sell:賣出/ stock:配股/ cash:配息
 	excute_amount INT, --以股為單位
 	excute_price DECIMAL(7,3),
-	excute_date DATE NOT NULL
+	excute_date DATE NOT NULL,
+	memo NVARCHAR(300)
 );
 CREATE INDEX IF NOT EXISTS Stock_Detail_idx ON Stock_Detail (stock_id, excute_date);
 

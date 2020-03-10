@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import asc
 import requests
 import json
@@ -114,10 +114,18 @@ class StockJournal(db.Model):
             return False
 
     def output4View(self, stock):
+        queryDate = datetime.now()
         payload = {'action': 'single_stock_close', 'code': stock.stock_code,
-                   'date': datetime.now().strftime("%Y/%m/%d")}
-        response = requests.get('??', params=payload)
-        data = response.json()['data']
+                   'date': queryDate.strftime("%Y/%m/%d")}
+        data = ''
+
+        # search for previous day if queryDate's price not exist
+        while data == '':
+            response = requests.get(
+                'http://139.162.105.61/stone/index.py', params=payload)
+            data = response.json()['data']
+            queryDate = queryDate - timedelta(days=1)
+            payload['date'] = queryDate.strftime("%Y/%m/%d")
 
         return {
             'stock_id': stock.stock_id,
