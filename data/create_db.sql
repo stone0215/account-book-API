@@ -103,35 +103,50 @@ CREATE TABLE IF NOT EXISTS Initial_Setting (
 );
 
 -- 保險流水帳檔
-CREATE TABLE IF NOT EXISTS Insurance (
+CREATE TABLE IF NOT EXISTS Insurance_Journal (
 	insurance_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	insurance_name NVARCHAR(60) NOT NULL,
-	insurance_type VARCHAR(10) NOT NULL,
-	create_date DATE NOT NULL,
-	pay_type VARCHAR(10) NOT NULL,
-    pay_day VARCHAR(23) NOT NULL,
-	expected_pay INTEGER NOT NULL,
-	insurance_index TINYINT
+	-- insurance_type VARCHAR(10) NOT NULL, -- save:儲蓄險/ live:壽險/ invest:投資型
+	asset_id INTEGER NOT NULL,
+	account_id INTEGER NOT NULL,
+    account_name NVARCHAR(60) NOT NULL,
+	start_date DATE NOT NULL,
+	expected_end_date DATE NOT NULL,
+	pay_type VARCHAR(10) NOT NULL, -- 繳別，month:月/ season:季/ year:年
+    pay_day VARCHAR(23) NOT NULL, -- 依繳別，month:dd/ season:mm/dd,mm/dd.../ year:mm/dd
+	expected_spend INTEGER NOT NULL,
+	has_closed CHARACTER(1) NOT NULL
 );
+
+-- 保險明細檔
+CREATE TABLE IF NOT EXISTS Insurance_Detail (
+	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	insurance_id INTEGER NOT NULL,
+	excute_type VARCHAR(10) NOT NULL, -- pay:扣款/ cash:配息/ return:贖回
+	excute_price DECIMAL(7,3) NOT NULL,
+	excute_date DATE NOT NULL,
+	memo NVARCHAR(300)
+);
+CREATE INDEX IF NOT EXISTS Insurance_Detail_idx ON Insurance_Detail (insurance_id, excute_date);
 
 -- 保險餘額檔，關帳後如有異動才寫入，因為不一定是月繳
-CREATE TABLE IF NOT EXISTS Insurance_Balance (
-	insurance_id INTEGER, -- 對應 Insurance.insurance_id
-	balance_month CHARACTER(6),
-	name NVARCHAR(60) NOT NULL, -- 對應 Insurance.name
-    balance DECIMAL(8,2) NOT NULL,
-	PRIMARY KEY (insurance_id, balance_month)
-);
+-- CREATE TABLE IF NOT EXISTS Insurance_Balance (
+-- 	insurance_id INTEGER, -- 對應 Insurance.insurance_id
+-- 	balance_month CHARACTER(6),
+-- 	name NVARCHAR(60) NOT NULL, -- 對應 Insurance.name
+--     balance DECIMAL(8,2) NOT NULL,
+-- 	PRIMARY KEY (insurance_id, balance_month)
+-- );
 
 -- 保險歷史價值檔，每年更新解約金額
-CREATE TABLE IF NOT EXISTS Insurance_History (
-	insurance_id INTEGER, -- 對應 Insurance.insurance_id
-	year CHARACTER(4),
-	value DECIMAL(10,3)  NOT NULL,
-    balance DECIMAL(10,3) NOT NULL,
-    fx_code CHARACTER(3) NOT NULL, -- 對應 Insurance.code
-	PRIMARY KEY (insurance_id, year)
-);
+-- CREATE TABLE IF NOT EXISTS Insurance_History (
+-- 	insurance_id INTEGER, -- 對應 Insurance.insurance_id
+-- 	year CHARACTER(4),
+-- 	value DECIMAL(10,3)  NOT NULL,
+--     balance DECIMAL(10,3) NOT NULL,
+--     fx_code CHARACTER(3) NOT NULL, -- 對應 Insurance.code
+-- 	PRIMARY KEY (insurance_id, year)
+-- );
 
 -- 流水帳檔
 CREATE TABLE IF NOT EXISTS Journal (
@@ -188,7 +203,7 @@ CREATE TABLE IF NOT EXISTS Stock_Journal (
 -- 股票明細檔
 CREATE TABLE IF NOT EXISTS Stock_Detail (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-	stock_id INTEGER,
+	stock_id INTEGER NOT NULL,
 	excute_type VARCHAR(10) NOT NULL, -- buy:買入/ sell:賣出/ stock:配股/ cash:配息
 	excute_amount INT, --以股為單位
 	excute_price DECIMAL(7,3),
