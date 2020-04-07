@@ -100,7 +100,7 @@ def init_stock_asset_api(app):
 
             stock_detail = StockDetail(stock_id=inputData['stock_id'], excute_type=inputData['excute_type'],
                                        excute_amount=inputData['excute_amount'], excute_price=inputData['excute_price'],
-                                       excute_date=datetime.strptime(inputData['excute_date'], date_format))
+                                       excute_date=datetime.strptime(inputData['excute_date'], date_format), memo=inputData['memo'])
             result = StockDetail.add(StockDetail, stock_detail)
 
             if result:
@@ -126,6 +126,7 @@ def init_stock_asset_api(app):
                 stock_detail.excute_price = inputData['excute_price']
                 stock_detail.excute_date = datetime.strptime(
                     inputData['excute_date'], date_format)
+                stock_detail.memo = inputData['memo']
 
                 if StockDetail.update(StockDetail):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
