@@ -47,6 +47,7 @@ def init_budget_api(app):
     def bulkInsertBudget(next_year):
         prepared_data = []
         try:
+            # 有設定好選單才有辦法新增
             codes = Code.query4BudgetSelection(Code)
 
             for code in codes:

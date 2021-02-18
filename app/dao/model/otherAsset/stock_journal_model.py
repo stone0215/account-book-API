@@ -120,12 +120,12 @@ class StockJournal(db.Model):
         data = ''
 
         # search for previous day if queryDate's price not exist
-        while data == '':
-            response = requests.get(
-                '??', params=payload)
-            data = response.json()['data']
-            queryDate = queryDate - timedelta(days=1)
-            payload['date'] = queryDate.strftime("%Y/%m/%d")
+        # while data == '':
+        # response = requests.get(
+        #     'http://139.162.105.61/stone/index.py?action=single_stock_close&code=%s&date=%s', params=payload)
+        # data = response.json()['data']
+        # queryDate = queryDate - timedelta(days=1)
+        # payload['date'] = queryDate.strftime("%Y/%m/%d")
 
         return {
             'stock_id': stock.stock_id,
@@ -135,7 +135,7 @@ class StockJournal(db.Model):
             'account_id': stock.account_id,
             'account_name': stock.account_name,
             'expected_spend': stock.expected_spend,
-            'now_price': data['price'],
+            'now_price': 10,  # 先寫死 data['price'],
             'hold_amount': stock.hold_amount,
             'sold_amount': stock.sold_amount,
             'buy_price': stock.buy_price,

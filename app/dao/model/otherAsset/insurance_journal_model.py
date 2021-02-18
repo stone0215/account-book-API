@@ -12,10 +12,11 @@ class InsuranceJournal(db.Model):
     __tablename__ = 'Insurance_Journal'
     insurance_id = db.Column(db.Integer, primary_key=True)
     insurance_name = db.Column(db.String(60), nullable=False)
-    # insurance_type = db.Column(db.String(10), nullable=False)
     asset_id = db.Column(db.Integer, nullable=False)
-    account_id = db.Column(db.Integer, nullable=False)
-    account_name = db.Column(db.String(60), nullable=False)
+    in_account_id = db.Column(db.Integer, nullable=False)
+    in_account_name = db.Column(db.String(60), nullable=False)
+    out_account_id = db.Column(db.Integer, nullable=False)
+    out_account_name = db.Column(db.String(60), nullable=False)
     start_date = db.Column(db.DateTime, nullable=False, index=True)
     expected_end_date = db.Column(db.DateTime, nullable=False)
     pay_type = db.Column(db.String(10), nullable=False)
@@ -24,13 +25,13 @@ class InsuranceJournal(db.Model):
     has_closed = db.Column(db.String(1), nullable=False)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, insurance_name, stock_code, asset_id, account_id, account_name, start_date, expected_end_date, pay_type, pay_day, expected_spend, has_closed):
+    def __init__(self, insurance_name, asset_id, in_account_id, in_account_name, out_account_id, out_account_name, start_date, expected_end_date, pay_type, pay_day, expected_spend, has_closed):
         self.insurance_name = insurance_name
-        # self.insurance_type = insurance_type
         self.asset_id = asset_id
-        self.stock_code = stock_code
-        self.account_id = account_id
-        self.account_name = account_name
+        self.in_account_id = in_account_id
+        self.in_account_name = in_account_name
+        self.out_account_id = out_account_id
+        self.out_account_name = out_account_name
         self.start_date = start_date
         self.expected_end_date = expected_end_date
         self.pay_type = pay_type
@@ -47,67 +48,37 @@ class InsuranceJournal(db.Model):
 
     def query4Summary(self, asset_id):
         sql = []
-        sql.append("SELECT *, ROUND(100*gain_lose/total_cost,2) AS ROI, ")
         sql.append(
-            "    ROUND(100*total_cash_dividend/hold_amount/buy_price,2) AS dividend_yield ")
+            "SELECT insurance_main.insurance_id, insurance_name, asset_id, in_account_id, in_account_name, out_account_id, out_account_name, ")
         sql.append(
-            "FROM (SELECT stock_main.*, price.close_price AS now_price, ")
+            "pay_type, pay_day, start_date, expected_end_date, has_closed, expected_spend, Insurance_Amount.actual_spend, ")
         sql.append(
-            "    (total_buy+IFNULL(total_stock_dividend,0)-total_sell) AS hold_amount, ")
+            "Insurance_Profit.gain_lose, ROUND(100*Insurance_Profit.gain_lose/Insurance_Amount.actual_spend,2) AS ROI ")
+        sql.append("FROM Insurance_Journal insurance_main ")
         sql.append(
-            "    total_sell AS sold_amount, ROUND(total_cost/total_buy,2) AS buy_price, ")
+            "LEFT JOIN (SELECT insurance_id, insurance_excute_type, SUM(IFNULL(excute_price,0)) AS gain_lose ")
+        sql.append("    FROM Insurance_Detail) Insurance_Profit ")
         sql.append(
-            "    ROUND(IFNULL(total_gain,0)/total_sell,2) AS sold_price, buy_date, sold_date, ")
+            "    ON Insurance_Profit.insurance_id=insurance_main.insurance_id ")
         sql.append(
-            "    (IFNULL(total_gain,0)+IFNULL(total_stock_dividend*price.close_price,0)+IFNULL(total_cash_dividend,0)-total_cost) AS gain_lose, ")
+            "        AND (Insurance_Profit.insurance_excute_type = 'cash' OR Insurance_Profit.insurance_excute_type = 'return')")
         sql.append(
-            "    total_cost, IFNULL(total_cash_dividend,0) AS total_cash_dividend ")
-        sql.append("FROM Insurance_Journal stock_main ")
-        sql.append("LEFT JOIN (")
-        sql.append("    SELECT insurance_id, SUM(excute_amount) AS total_buy, ")
+            "LEFT JOIN (SELECT insurance_id, insurance_excute_type, SUM(IFNULL(excute_price,0)) AS actual_spend ")
+        sql.append("    FROM Insurance_Detail) Insurance_Amount ")
         sql.append(
-            "        SUM(excute_price) AS total_cost, MIN(excute_date) AS buy_date ")
-        sql.append(
-            "    FROM Insurance_Detail WHERE excute_type='buy' GROUP BY insurance_id) buy_detail ")
-        sql.append("ON stock_main.insurance_id=buy_detail.insurance_id ")
-        sql.append("LEFT JOIN (")
-        sql.append("    SELECT insurance_id, SUM(excute_amount) AS total_sell, ")
-        sql.append(
-            "        SUM(excute_price) AS total_gain, MAX(excute_date) AS sold_date ")
-        sql.append(
-            "    FROM Insurance_Detail WHERE excute_type='sell' GROUP BY insurance_id) sell_detail ")
-        sql.append("ON stock_main.insurance_id=sell_detail.insurance_id ")
-        sql.append("LEFT JOIN (")
-        sql.append(
-            "    SELECT insurance_id, SUM(excute_amount) AS total_stock_dividend ")
-        sql.append("    FROM Insurance_Detail WHERE excute_type='stock' ")
-        sql.append("    GROUP BY insurance_id) stock_dividend ")
-        sql.append("ON stock_main.insurance_id=stock_dividend.insurance_id ")
-        sql.append("LEFT JOIN (")
-        sql.append(
-            "    SELECT insurance_id, SUM(excute_price) AS total_cash_dividend ")
-        sql.append(
-            "    FROM Insurance_Detail WHERE excute_type='cash' GROUP BY insurance_id) cash_dividend ")
-        sql.append("ON stock_main.insurance_id=cash_dividend.insurance_id ")
-        sql.append("LEFT JOIN (")
-        sql.append(
-            "    SELECT stock_code, MAX(fetch_date) AS max_date FROM Insurance_Price_History ")
-        sql.append(
-            "    GROUP BY stock_code ) max_date ON stock_main.stock_code=max_date.stock_code ")
-        sql.append("LEFT JOIN Insurance_Price_History price ")
-        sql.append(
-            "ON stock_main.stock_code=price.stock_code AND fetch_date=max_date ")
+            "    ON Insurance_Amount.insurance_id=insurance_main.insurance_id")
+        sql.append("        AND Insurance_Amount.insurance_excute_type = 'pay'")
         sql.append("WHERE asset_id=" + str(asset_id))
-        sql.append(" ORDER BY stock_main.insurance_id ASC)")
+        sql.append(" ORDER BY insurance_main.insurance_id ASC")
 
         return db.engine.execute(''.join(sql))  # sql 陣列轉字串
 
-    def add(self, stock_journal):
-        db.session.add(stock_journal)
+    def add(self, insurance_journal):
+        db.session.add(insurance_journal)
         db.session.flush()
 
         if DaoBase.session_commit(self) == '':
-            return stock_journal
+            return insurance_journal
         else:
             return False
 
@@ -124,44 +95,30 @@ class InsuranceJournal(db.Model):
         else:
             return False
 
-    def output4View(self, stock):
-        queryDate = datetime.now()
-        payload = {'action': 'single_stock_close', 'code': stock.stock_code,
-                   'date': queryDate.strftime("%Y/%m/%d")}
-        data = ''
-
-        # search for previous day if queryDate's price not exist
-        while data == '':
-            response = requests.get(
-                'http://139.162.105.61/stone/index.py', params=payload)
-            data = response.json()['data']
-            queryDate = queryDate - timedelta(days=1)
-            payload['date'] = queryDate.strftime("%Y/%m/%d")
-
+    def output4View(self, insurance):
         return {
-            'insurance_id': stock.insurance_id,
-            'stock_code': stock.stock_code,
-            'insurance_name': stock.insurance_name,
-            'asset_id': stock.asset_id,
-            'account_id': stock.account_id,
-            'account_name': stock.account_name,
-            'expected_spend': stock.expected_spend,
-            'now_price': data['price'],
-            'hold_amount': stock.hold_amount,
-            'sold_amount': stock.sold_amount,
-            'buy_price': stock.buy_price,
-            'sold_price': stock.sold_price,
-            'buy_date': datetime.strptime(stock.buy_date, '%Y-%m-%d %H:%M:%S.%f') if stock.buy_date else '',
-            'sold_date': datetime.strptime(stock.sold_date, '%Y-%m-%d %H:%M:%S.%f') if stock.sold_date else '',
-            'gain_lose': stock.gain_lose,
-            'ROI': stock.ROI,
-            'dividend_yield': stock.dividend_yield
+            'insurance_id': insurance.insurance_id,
+            'insurance_name': insurance.insurance_name,
+            'asset_id': insurance.asset_id,
+            'in_account_id': insurance.in_account_id,
+            'in_account_name': insurance.in_account_name,
+            'out_account_id': insurance.out_account_id,
+            'out_account_name': insurance.out_account_name,
+            'pay_type': insurance.pay_type,
+            'pay_day': insurance.pay_day,
+            'expected_spend': insurance.expected_spend,
+            'start_date': datetime.strptime(insurance.start_date, '%Y-%m-%d %H:%M:%S.%f') if insurance.start_date else '',
+            'expected_end_date': datetime.strptime(insurance.expected_end_date, '%Y-%m-%d %H:%M:%S.%f') if insurance.expected_end_date else '',
+            'has_closed': insurance.has_closed,
+            'actual_spend': insurance.actual_spend,
+            'gain_lose': insurance.gain_lose,
+            'ROI': insurance.ROI
+            # 'IRR': insurance.IRR
         }
 
-    def output(self, stock):
+    def output(self, insurance):
         return {
-            'insurance_id': stock.insurance_id,
-            'stock_code': stock.stock_code,
-            'insurance_name': stock.insurance_name,
-            'asset_id': stock.asset_id
+            'insurance_id': insurance.insurance_id,
+            'insurance_name': insurance.insurance_name,
+            'asset_id': insurance.asset_id
         }

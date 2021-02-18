@@ -106,14 +106,16 @@ CREATE TABLE IF NOT EXISTS Initial_Setting (
 CREATE TABLE IF NOT EXISTS Insurance_Journal (
 	insurance_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	insurance_name NVARCHAR(60) NOT NULL,
-	-- insurance_type VARCHAR(10) NOT NULL, -- save:儲蓄險/ live:壽險/ invest:投資型，估計會直接建立用頁籤分類，所以先不用
+	-- insurance_type VARCHAR(10) NOT NULL, -- save:儲蓄險/ live:壽險/ invest:投資型，直接用頁籤分類，所以先不用
 	asset_id INTEGER NOT NULL,
-	account_id INTEGER NOT NULL,
-    account_name NVARCHAR(60) NOT NULL,
+	in_account_id INTEGER NOT NULL,
+    in_account_name NVARCHAR(60) NOT NULL,
+	out_account_id INTEGER NOT NULL,
+    out_account_name NVARCHAR(60) NOT NULL,
 	start_date DATE NOT NULL,
 	expected_end_date DATE NOT NULL,
-	pay_type VARCHAR(10) NOT NULL, -- 繳別，month:月/ season:季/ year:年
-    pay_day VARCHAR(23) NOT NULL, -- 依繳別，month:dd/ season:mm/dd,mm/dd.../ year:mm/dd
+	pay_type VARCHAR(10) NOT NULL, -- 繳別，month:月/ season:季/ year:年/ once:躉繳
+    pay_day VARCHAR(23), -- 依繳別，month:dd/ season:mm/dd,mm/dd.../ year:mm/dd
 	expected_spend INTEGER NOT NULL,
 	has_closed CHARACTER(1) NOT NULL
 );
@@ -122,7 +124,7 @@ CREATE TABLE IF NOT EXISTS Insurance_Journal (
 CREATE TABLE IF NOT EXISTS Insurance_Detail (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	insurance_id INTEGER NOT NULL,
-	excute_type VARCHAR(10) NOT NULL, -- pay:扣款/ cash:配息/ return:贖回
+	insurance_excute_type VARCHAR(10) NOT NULL, -- pay:扣款/ cash:配息/ return:贖回/ expect:預期價值
 	excute_price DECIMAL(7,3) NOT NULL,
 	excute_date DATE NOT NULL,
 	memo NVARCHAR(300)

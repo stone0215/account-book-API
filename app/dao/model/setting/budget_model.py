@@ -123,6 +123,6 @@ class Budget(db.Model):
     def outputRange(self, budget):
         thisYear = datetime.now().year
         return {
-            'min': int(budget.min) or thisYear,
-            'max': int(budget.max) or thisYear
+            'min': thisYear if budget.min is None else int(budget.min),
+            'max': thisYear if budget.min is None else int(budget.max)
         }
