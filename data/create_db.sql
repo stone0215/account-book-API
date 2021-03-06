@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS Account_Balance (
 	account_id INTEGER, -- 對應 Account.account_id
 	balance_month CHARACTER(6),
 	name NVARCHAR(60) NOT NULL,
-    balance DECIMAL(8,2) NOT NULL,
+    balance DECIMAL(9,2) NOT NULL,
     buy_rate DECIMAL(5,2),
 	PRIMARY KEY (account_id, balance_month)
 );
@@ -34,18 +34,18 @@ CREATE TABLE IF NOT EXISTS Budget (
 	category_code VARCHAR(10), --對應 Code_Data.code_id
 	category_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
 	code_type VARCHAR(10) NOT NULL, -- 對應 Code_Data.code_type
-    expected1 DECIMAL(8,2) NOT NULL,
-	expected2 DECIMAL(8,2) NOT NULL,
-	expected3 DECIMAL(8,2) NOT NULL,
-	expected4 DECIMAL(8,2) NOT NULL,
-	expected5 DECIMAL(8,2) NOT NULL,
-	expected6 DECIMAL(8,2) NOT NULL,
-	expected7 DECIMAL(8,2) NOT NULL,
-	expected8 DECIMAL(8,2) NOT NULL,
-	expected9 DECIMAL(8,2) NOT NULL,
-	expected10 DECIMAL(8,2) NOT NULL,
-	expected11 DECIMAL(8,2) NOT NULL,
-	expected12 DECIMAL(8,2) NOT NULL,
+    expected1 DECIMAL(9,2) NOT NULL,
+	expected2 DECIMAL(9,2) NOT NULL,
+	expected3 DECIMAL(9,2) NOT NULL,
+	expected4 DECIMAL(9,2) NOT NULL,
+	expected5 DECIMAL(9,2) NOT NULL,
+	expected6 DECIMAL(9,2) NOT NULL,
+	expected7 DECIMAL(9,2) NOT NULL,
+	expected8 DECIMAL(9,2) NOT NULL,
+	expected9 DECIMAL(9,2) NOT NULL,
+	expected10 DECIMAL(9,2) NOT NULL,
+	expected11 DECIMAL(9,2) NOT NULL,
+	expected12 DECIMAL(9,2) NOT NULL,
 	PRIMARY KEY (budget_year, category_code)
 );
 
@@ -79,9 +79,36 @@ CREATE TABLE IF NOT EXISTS Credit_Card_Balance (
 	credit_card_id INTEGER, -- 對應 Credit_Card.credit_card_id
 	balance_month CHARACTER(6),
 	name NVARCHAR(60) NOT NULL, -- 對應 Credit_Card.name
-    balance DECIMAL(8,2) NOT NULL,
+    balance DECIMAL(9,2) NOT NULL,
 	PRIMARY KEY (credit_card_id, balance_month)
 );
+
+-- 不動產主檔
+CREATE TABLE IF NOT EXISTS Estate (
+	estate_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	estate_name NVARCHAR(60) NOT NULL,
+	estate_type VARCHAR(10) NOT NULL, -- house:獨棟透天 / townhouse:連棟透天 / condo:公寓 / apartment:電梯大樓 / highrise:商辦 / land:土地
+	asset_id INTEGER NOT NULL,
+	buy_date DATE NOT NULL,
+	loan_id INTEGER, -- 對應 Loan.loan_id
+	-- loan_amount DECIMAL(9,2) NOT NULL,
+	-- pay_day CHAR(5), -- mm/dd
+	-- expected_end_date DATE,
+	estate_status VARCHAR(10) NOT NULL -- idle:閒置 / live:居住 / rent:出租 / sold:賣出
+);
+
+-- 不動產流水帳檔
+CREATE TABLE IF NOT EXISTS Estate_Journal (
+	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	estate_id INTEGER NOT NULL,
+	estate_excute_name NVARCHAR(60) NOT NULL,
+	estate_excute_type VARCHAR(10) NOT NULL, -- tax:稅費 / fee:雜費 / fix:修繕 / rent:租金 / deposit:押金
+	excute_price DECIMAL(7,3) NOT NULL,
+	excute_date DATE NOT NULL,
+	memo NVARCHAR(300)
+);
+CREATE INDEX IF NOT EXISTS Estate_Journal_idx ON Estate_Journal (estate_id, excute_date);
+CREATE INDEX IF NOT EXISTS Estate_Income_idx ON Estate_Journal (estate_id, estate_excute_type);
 
 -- 歷史匯率檔，當天有撈才會寫入
 CREATE TABLE IF NOT EXISTS FX_Rate (
@@ -103,7 +130,7 @@ CREATE TABLE IF NOT EXISTS Initial_Setting (
 );
 
 -- 保險流水帳檔
-CREATE TABLE IF NOT EXISTS Insurance_Journal (
+CREATE TABLE IF NOT EXISTS Insurance (
 	insurance_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	insurance_name NVARCHAR(60) NOT NULL,
 	-- insurance_type VARCHAR(10) NOT NULL, -- save:儲蓄險/ live:壽險/ invest:投資型，直接用頁籤分類，所以先不用
@@ -121,7 +148,7 @@ CREATE TABLE IF NOT EXISTS Insurance_Journal (
 );
 
 -- 保險明細檔
-CREATE TABLE IF NOT EXISTS Insurance_Detail (
+CREATE TABLE IF NOT EXISTS Insurance_Journal (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	insurance_id INTEGER NOT NULL,
 	insurance_excute_type VARCHAR(10) NOT NULL, -- pay:扣款/ cash:配息/ return:贖回/ expect:預期價值
@@ -129,14 +156,15 @@ CREATE TABLE IF NOT EXISTS Insurance_Detail (
 	excute_date DATE NOT NULL,
 	memo NVARCHAR(300)
 );
-CREATE INDEX IF NOT EXISTS Insurance_Detail_idx ON Insurance_Detail (insurance_id, excute_date);
+CREATE INDEX IF NOT EXISTS Insurance_Journal_idx ON Insurance_Journal (insurance_id, excute_date);
+CREATE INDEX IF NOT EXISTS Insurance_Income_idx ON Insurance_Journal (insurance_id, insurance_excute_type);
 
 -- 保險餘額檔，關帳後如有異動才寫入，因為不一定是月繳
 -- CREATE TABLE IF NOT EXISTS Insurance_Balance (
 -- 	insurance_id INTEGER, -- 對應 Insurance.insurance_id
 -- 	balance_month CHARACTER(6),
 -- 	name NVARCHAR(60) NOT NULL, -- 對應 Insurance.name
---     balance DECIMAL(8,2) NOT NULL,
+--     balance DECIMAL(9,2) NOT NULL,
 -- 	PRIMARY KEY (insurance_id, balance_month)
 -- );
 
@@ -156,7 +184,7 @@ CREATE TABLE IF NOT EXISTS Journal (
 	spend_way VARCHAR(10) NOT NULL,
 	action_main VARCHAR(10) NOT NULL,
     action_sub VARCHAR(10) NOT NULL,
-    spending DECIMAL(8,2) NOT NULL,
+    spending DECIMAL(9,2) NOT NULL,
     note TEXT
 );
 CREATE INDEX IF NOT EXISTS Journal_spend_date_idx ON Journal (spend_date);
@@ -178,7 +206,7 @@ CREATE TABLE IF NOT EXISTS Loan_Balance (
 	loan_id INTEGER, -- 對應 Loan.loan_id
 	balance_month CHARACTER(6),
 	name NVARCHAR(60) NOT NULL, -- 對應 Loan.name
-    balance DECIMAL(8,2) NOT NULL,
+    balance DECIMAL(9,2) NOT NULL,
 	PRIMARY KEY (loan_id, balance_month)
 );
 
