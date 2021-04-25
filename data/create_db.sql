@@ -88,8 +88,10 @@ CREATE TABLE IF NOT EXISTS Estate (
 	estate_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	estate_name NVARCHAR(60) NOT NULL,
 	estate_type VARCHAR(10) NOT NULL, -- house:獨棟透天 / townhouse:連棟透天 / condo:公寓 / apartment:電梯大樓 / highrise:商辦 / land:土地
+	estate_address NVARCHAR(300) NOT NULL,
 	asset_id INTEGER NOT NULL,
-	buy_date DATE NOT NULL,
+	obtain_date DATE NOT NULL,
+	down_payment DECIMAL(9,2) NOT NULL, -- 初始本金/頭期款
 	loan_id INTEGER, -- 對應 Loan.loan_id
 	-- loan_amount DECIMAL(9,2) NOT NULL,
 	-- pay_day CHAR(5), -- mm/dd
@@ -101,9 +103,9 @@ CREATE TABLE IF NOT EXISTS Estate (
 CREATE TABLE IF NOT EXISTS Estate_Journal (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	estate_id INTEGER NOT NULL,
-	estate_excute_name NVARCHAR(60) NOT NULL,
+	-- estate_excute_name NVARCHAR(60) NOT NULL,
 	estate_excute_type VARCHAR(10) NOT NULL, -- tax:稅費 / fee:雜費 / fix:修繕 / rent:租金 / deposit:押金
-	excute_price DECIMAL(7,3) NOT NULL,
+	excute_price DECIMAL(9,2) NOT NULL,
 	excute_date DATE NOT NULL,
 	memo NVARCHAR(300)
 );
