@@ -41,7 +41,7 @@ class Estate(db.Model):
     def query4Summary(self, asset_id):
         sql = []
         sql.append(
-            "SELECT estate_main.estate_id, estate_name, estate_type, estate_address, asset_id, obtain_date, down_payment, loan_id, 'test' as loan_name, ")
+            "SELECT estate_main.estate_id, estate_name, estate_type, estate_address, asset_id, obtain_date, down_payment, loan_id, loan_name, ")
         sql.append(
             "estate_status, Estate_Amount.cost, Estate_Profit.profit ")
         sql.append("FROM Estate estate_main ")
@@ -56,8 +56,10 @@ class Estate(db.Model):
             "    FROM Estate_Journal WHERE estate_excute_type = 'rent') Estate_Profit ")
         sql.append(
             "    ON Estate_Profit.estate_id=estate_main.estate_id ")
-        # sql.append(
-        # "    ON Estate_Profit.estate_id=estate_main.estate_id") 須補貸款
+        sql.append(
+            "LEFT JOIN (SELECT loan_id, loan_name) AS Loan ")
+        sql.append(
+            "    ON Loan.loan_id=estate_main.loan_id")
         sql.append("WHERE asset_id=" + str(asset_id))
         sql.append(" ORDER BY estate_main.estate_id ASC")
 

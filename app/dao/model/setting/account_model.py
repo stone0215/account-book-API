@@ -11,7 +11,7 @@ class Account(db.Model):
     fx_code = db.Column(db.String(3), nullable=False)
     is_calculate = db.Column(db.String(1), nullable=False)
     in_use = db.Column(db.String(1), nullable=False, index=True)
-    discount = db.Column(db.Float),
+    discount = db.Column(db.Float)
     account_index = db.Column(db.SmallInteger)
 
     # 物件建立之後所要建立的初始化動作

@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS Estate_Journal (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	estate_id INTEGER NOT NULL,
 	-- estate_excute_name NVARCHAR(60) NOT NULL,
-	estate_excute_type VARCHAR(10) NOT NULL, -- tax:稅費 / fee:雜費 / fix:修繕 / rent:租金 / deposit:押金
+	estate_excute_type VARCHAR(10) NOT NULL, -- tax:稅費 / fee:雜費 / insurance:保險 / fix:修繕 / rent:租金 / deposit:押金
 	excute_price DECIMAL(9,2) NOT NULL,
 	excute_date DATE NOT NULL,
 	memo NVARCHAR(300)
@@ -191,17 +191,33 @@ CREATE TABLE IF NOT EXISTS Journal (
 );
 CREATE INDEX IF NOT EXISTS Journal_spend_date_idx ON Journal (spend_date);
 
--- 貸款設定檔
+-- 貸款主檔
 CREATE TABLE IF NOT EXISTS Loan (
 	loan_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	loan_name NVARCHAR(60) NOT NULL,
+	loan_type VARCHAR(10) NOT NULL, -- unsecured:信貸 / mortgage:房貸 / financial:理財型房貸 / secured:擔保貸款
 	account_id INTEGER NOT NULL, -- 對應 Account.account_id
     account_name NVARCHAR(60) NOT NULL, -- 對應 Account.name
 	interest_rate DECIMAL(4,3) NOT NULL,
+	perid INTEGER NOT NULL,
 	apply_date DATE NOT NULL,
-    pay_day VARCHAR(2) NOT NULL,
+	pay_day VARCHAR(2) NOT NULL,
+	amount DECIMAL(9,2) NOT NULL,
+	repayed CHARACTER(1) NOT NULL,
 	loan_index TINYINT
 );
+
+-- 貸款流水帳檔
+CREATE TABLE IF NOT EXISTS Loan_Journal (
+	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	loan_id INTEGER NOT NULL,
+	Loan_excute_type VARCHAR(10) NOT NULL, -- principal:償還本金 / interest:支付利息 / increment:增貸 / fee:雜費
+	excute_price DECIMAL(9,2) NOT NULL,
+	excute_date DATE NOT NULL,
+	memo NVARCHAR(300)
+);
+CREATE INDEX IF NOT EXISTS Loan_Journal_idx ON Loan_Journal (loan_id, excute_date);
+CREATE INDEX IF NOT EXISTS Loan_Income_idx ON Loan_Journal (loan_id, Loan_excute_type);
 
 -- 貸款餘額檔，關帳後寫入
 CREATE TABLE IF NOT EXISTS Loan_Balance (
