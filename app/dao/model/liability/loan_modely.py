@@ -18,13 +18,14 @@ class Loan(db.Model):
     interest_rate = db.Column(db.Float, nullable=False)
     perid = db.Column(db.Integer, nullable=False)
     apply_date = db.Column(db.DateTime, nullable=False, index=True)
+    grace_expire_date = db.Column(db.DateTime)
     pay_day = db.Column(db.String(2), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     repayed = db.Column(db.String(1), nullable=False, index=True)
     loan_index = db.Column(db.SmallInteger)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, loan_name, loan_type, account_id, account_name, interest_rate, perid, apply_date, pay_day, amount, repayed, loan_index):
+    def __init__(self, loan_name, loan_type, account_id, account_name, interest_rate, perid, apply_date, grace_expire_date, pay_day, amount, repayed, loan_index):
         self.loan_name = loan_name
         self.loan_type = loan_type
         self.account_id = account_id
@@ -32,6 +33,7 @@ class Loan(db.Model):
         self.interest_rate = interest_rate
         self.perid = perid
         self.apply_date = apply_date
+        self.grace_expire_date = grace_expire_date or ''
         self.pay_day = pay_day
         self.amount = amount
         self.repayed = repayed
@@ -47,9 +49,10 @@ class Loan(db.Model):
     def query4Summary(self):
         sql = []
         sql.append(
-            "SELECT loan_main.loan_id, loan_name, loan_type, apply_date, amount, ")
-        sql.append("amount-principal_payed AS remaining, ")
-        sql.append("principal_payed+interest_payed AS total_payed, repayed ")
+            "SELECT loan_main.loan_id, loan_name, loan_type, apply_date, grace_expire_date, amount, ")
+        sql.append("amount-IFNULL(principal_payed,0) AS remaining, ")
+        sql.append(
+            "IFNULL(principal_payed+interest_payed,0) AS total_payed, repayed ")
         sql.append("FROM Loan Loan_Main ")
         sql.append(
             "LEFT JOIN (SELECT loan_id, SUM(IFNULL(excute_price,0)) AS principal_payed ")
@@ -68,7 +71,7 @@ class Loan(db.Model):
         return db.engine.execute(''.join(sql))  # sql 陣列轉字串
 
     def query4Selection(self):
-        return self.query.with_entities(self.loan_id, self.loan_name, self.loan_index).filter_by(repayed='N')
+        return self.query.with_entities(self.loan_id, self.loan_name, self.loan_index)
 
     def add(self, Loan):
         db.session.add(Loan)
@@ -98,6 +101,7 @@ class Loan(db.Model):
             'loan_name': Loan.loan_name,
             'loan_type': Loan.loan_type,
             'apply_date': datetime.strptime(Loan.apply_date, '%Y-%m-%d %H:%M:%S.%f'),
+            'grace_expire_date': datetime.strptime(Loan.grace_expire_date, '%Y-%m-%d %H:%M:%S.%f') if Loan.grace_expire_date else '',
             'amount': Loan.amount,
             'remaining': Loan.remaining,
             'total_payed': Loan.total_payed,
@@ -107,12 +111,24 @@ class Loan(db.Model):
     def output(self, Loan):
         return {
             'loan_id': Loan.loan_id,
-            'loan_name': Loan.loan_name
+            'loan_name': Loan.loan_name,
+            'loan_type': Loan.loan_type,
+            'account_id': Loan.account_id,
+            'account_name': Loan.account_name,
+            'interest_rate': Loan.interest_rate,
+            'perid': Loan.perid,
+            'apply_date': Loan.apply_date,
+            'grace_expire_date': Loan.grace_expire_date,
+            'pay_day': Loan.pay_day,
+            'amount': Loan.amount,
+            'repayed': Loan.repayed,
+            'loan_index': Loan.loan_index if Loan.loan_index else ''
         }
 
     def output4Selection(self, Loan):
         return {
             'key': Loan.loan_id,
             'value': Loan.loan_name,
-            'loan_index': Loan.loan_index
+            'index:': Loan.loan_index,
+            'type': 'Loan'
         }

@@ -50,7 +50,7 @@ class Account(db.Model):
         return db.engine.execute(''.join(sql))
 
     def query4Selection(self):
-        return self.query.with_entities(self.account_id, self.name).filter_by(in_use='Y')
+        return self.query.with_entities(self.account_id, self.name, self.account_index).filter_by(in_use='Y')
 
     def add(self, account):
         db.session.add(account)
@@ -87,5 +87,6 @@ class Account(db.Model):
         return {
             'key': Account.account_id,
             'value': Account.name,
+            'index': Account.account_index,
             'type': 'Account'
         }

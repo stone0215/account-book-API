@@ -18,8 +18,20 @@ def init_liability_api(app):
         try:
             liabilitys = Loan.query4Summary(Loan)
             for liability in liabilitys:
-                output.append(Loan.output4View(
-                    Loan, liability))
+                output.append(Loan.output4View(Loan, liability))
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, output))
+
+    @app.route('/liability/loan/<int:loan_id>', methods=['GET'])
+    def getLoanById(loan_id):
+        output = {}
+
+        try:
+            liability = Loan.queryByKey(Loan, loan_id)
+            output = Loan.output(Loan, liability)
+
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
@@ -38,6 +50,8 @@ def init_liability_api(app):
                              interest_rate=inputData['interest_rate'], perid=inputData['perid'],
                              apply_date=datetime.strptime(
                                  inputData['apply_date'], date_format),
+                             grace_expire_date=datetime.strptime(
+                                 inputData['grace_expire_date'], date_format) if inputData['grace_expire_date'] else None,
                              pay_day=inputData['pay_day'], amount=inputData['amount'],
                              repayed=inputData['repayed'], loan_index=inputData['loan_index'])
 
@@ -50,13 +64,12 @@ def init_liability_api(app):
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 
-    @app.route('/liability/loan/<int:estate_id>', methods=['PUT'])
-    def updateLoan(estate_id):
+    @app.route('/liability/loan/<int:loan_id>', methods=['PUT'])
+    def updateLoan(loan_id):
         global date_format
 
         try:
-            liability = Loan.queryByKey(
-                Loan, estate_id)
+            liability = Loan.queryByKey(Loan, loan_id)
             if liability is None:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
             else:
@@ -65,11 +78,17 @@ def init_liability_api(app):
                 liability.loan_name = inputData['loan_name']
                 liability.loan_type = inputData['loan_type']
                 liability.account_id = inputData['account_id']
+                liability.account_name = inputData['account_name']
+                liability.interest_rate = inputData['interest_rate']
+                liability.perid = inputData['perid']
                 liability.apply_date = datetime.strptime(
                     inputData['apply_date'], date_format)
-                liability.down_payment = inputData['down_payment']
-                liability.loan_id = inputData['loan_id'] if inputData['loan_id'] else None
+                liability.grace_expire_date = datetime.strptime(
+                    inputData['grace_expire_date'], date_format)
+                liability.pay_day = inputData['pay_day']
                 liability.amount = inputData['amount']
+                liability.repayed = inputData['repayed']
+                liability.loan_index = inputData['loan_index'] if inputData['loan_index'] else None
                 if Loan.update(Loan):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
                 else:
@@ -77,31 +96,44 @@ def init_liability_api(app):
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 
-    @app.route('/liability/loan/<int:estate_id>', methods=['DELETE'])
-    def deleteLoan(estate_id):
+    @app.route('/liability/loan/<int:loan_id>', methods=['DELETE'])
+    def deleteLoan(loan_id):
         try:
             liability = Loan.queryByKey(
-                Loan, estate_id)
+                Loan, loan_id)
             if liability is None:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
             else:
-                if Loan.delete(Loan, estate_id):
+                if Loan.delete(Loan, loan_id):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
                 else:
                     return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to delete estate data'))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 
-    @app.route('/liability/loan/detail/<int:estate_id>', methods=['GET'])
-    def getLoanJournals(estate_id):
+    @app.route('/liability/loan/selection', methods=['GET'])
+    def getLoanSelections():
         output = []
 
         try:
-            estate_journals = LoanJournal.queryByLoanId(
-                LoanJournal, estate_id)
-            for estate_journal in estate_journals:
+            loans = Loan.query4Selection(Loan)
+            for loan in loans:
+                output.append(Loan.output4Selection(Loan, loan))
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, output))
+
+    @app.route('/liability/loan/detail/<int:loan_id>', methods=['GET'])
+    def getLoanJournals(loan_id):
+        output = []
+
+        try:
+            loan_journals = LoanJournal.queryByLoanId(
+                LoanJournal, loan_id)
+            for loan_journal in loan_journals:
                 output.append(LoanJournal.output(
-                    LoanJournal, estate_journal))
+                    LoanJournal, loan_journal))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
@@ -115,11 +147,9 @@ def init_liability_api(app):
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
 
-            estate_journal = LoanJournal(estate_id=inputData['estate_id'], estate_excute_type=inputData['estate_excute_type'],
-                                         excute_price=inputData['excute_price'], excute_date=datetime.strptime(
-                inputData['excute_date'], date_format),
-                memo=inputData['memo'])
-            result = LoanJournal.add(LoanJournal, estate_journal)
+            loan_journal = LoanJournal(loan_id=inputData['loan_id'], loan_excute_type=inputData['loan_excute_type'],
+                                       excute_price=inputData['excute_price'], excute_date=datetime.strptime(inputData['excute_date'], date_format), memo=inputData['memo'])
+            result = LoanJournal.add(LoanJournal, loan_journal)
 
             if result:
                 return jsonify(ResponseFormat.true_return(ResponseFormat, LoanJournal.output(LoanJournal, result)))
@@ -133,18 +163,18 @@ def init_liability_api(app):
         global date_format
 
         try:
-            estate_journal = LoanJournal.queryByKey(
+            loan_journal = LoanJournal.queryByKey(
                 LoanJournal, distinct_number)
-            if estate_journal is None:
+            if loan_journal is None:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
             else:
                 inputData = request.get_json(force=True)
 
-                estate_journal.estate_excute_type = inputData['estate_excute_type']
-                estate_journal.excute_price = inputData['excute_price']
-                estate_journal.excute_date = datetime.strptime(
+                loan_journal.loan_excute_type = inputData['loan_excute_type']
+                loan_journal.excute_price = inputData['excute_price']
+                loan_journal.excute_date = datetime.strptime(
                     inputData['excute_date'], date_format)
-                estate_journal.memo = inputData['memo']
+                loan_journal.memo = inputData['memo']
 
                 if LoanJournal.update(LoanJournal):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
@@ -156,9 +186,9 @@ def init_liability_api(app):
     @app.route('/liability/loan/detail/<int:distinct_number>', methods=['DELETE'])
     def deleteLoanJournal(distinct_number):
         try:
-            estate_journal = LoanJournal.queryByKey(
+            loan_journal = LoanJournal.queryByKey(
                 LoanJournal, distinct_number)
-            if estate_journal is None:
+            if loan_journal is None:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
             else:
                 if LoanJournal.delete(LoanJournal, distinct_number):

@@ -55,7 +55,7 @@ class CreditCard(db.Model):
         return db.engine.execute(''.join(sql))
 
     def query4Selection(self):
-        return self.query.with_entities(self.credit_card_id, self.card_name).filter_by(in_use='Y')
+        return self.query.with_entities(self.credit_card_id, self.card_name, self.credit_card_index).filter_by(in_use='Y')
 
     def add(self, credit_card):
         db.session.add(credit_card)
@@ -90,9 +90,10 @@ class CreditCard(db.Model):
             'note': credit_card.note
         }
 
-    def output4Selection(self, credit_card):
+    def output4Selection(self, CreditCard):
         return {
-            'key': credit_card.credit_card_id,
-            'value': credit_card.card_name,
+            'key': CreditCard.credit_card_id,
+            'value': CreditCard.card_name,
+            'index': CreditCard.credit_card_index,
             'type': 'CreditCard'
         }

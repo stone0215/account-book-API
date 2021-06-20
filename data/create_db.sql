@@ -201,6 +201,7 @@ CREATE TABLE IF NOT EXISTS Loan (
 	interest_rate DECIMAL(4,3) NOT NULL,
 	perid INTEGER NOT NULL,
 	apply_date DATE NOT NULL,
+	grace_expire_date DATE,
 	pay_day VARCHAR(2) NOT NULL,
 	amount DECIMAL(9,2) NOT NULL,
 	repayed CHARACTER(1) NOT NULL,
@@ -211,7 +212,7 @@ CREATE TABLE IF NOT EXISTS Loan (
 CREATE TABLE IF NOT EXISTS Loan_Journal (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	loan_id INTEGER NOT NULL,
-	Loan_excute_type VARCHAR(10) NOT NULL, -- principal:償還本金 / interest:支付利息 / increment:增貸 / fee:雜費
+	loan_excute_type VARCHAR(10) NOT NULL, -- principal:償還本金 / interest:支付利息 / increment:增貸 / fee:雜費
 	excute_price DECIMAL(9,2) NOT NULL,
 	excute_date DATE NOT NULL,
 	memo NVARCHAR(300)

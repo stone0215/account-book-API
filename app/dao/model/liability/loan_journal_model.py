@@ -8,16 +8,16 @@ db = DaoBase().getDB()
 class LoanJournal(db.Model):
     __tablename__ = 'Loan_Journal'
     distinct_number = db.Column(db.Integer, primary_key=True)
-    estate_id = db.Column(db.Integer, nullable=False, index=True)
-    estate_excute_type = db.Column(db.String(10), nullable=False)
+    loan_id = db.Column(db.Integer, nullable=False, index=True)
+    loan_excute_type = db.Column(db.String(10), nullable=False)
     excute_price = db.Column(db.Float)
     excute_date = db.Column(db.DateTime, nullable=False, index=True)
     memo = db.Column(db.Text)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, estate_id, estate_excute_type, excute_price, excute_date, memo):
-        self.estate_id = estate_id
-        self.estate_excute_type = estate_excute_type
+    def __init__(self, loan_id, loan_excute_type, excute_price, excute_date, memo):
+        self.loan_id = loan_id
+        self.loan_excute_type = loan_excute_type
         self.excute_price = excute_price
         self.excute_date = excute_date
         self.memo = memo if memo else None
@@ -32,15 +32,15 @@ class LoanJournal(db.Model):
     def queryByKey(self, distinct_number):
         return self.query.filter_by(distinct_number=distinct_number).first()
 
-    def queryByLoanId(self, estate_id):
-        return self.query.filter_by(estate_id=estate_id)
+    def queryByLoanId(self, loan_id):
+        return self.query.filter_by(loan_id=loan_id)
 
-    def add(self, estate_asset):
-        db.session.add(estate_asset)
+    def add(self, LoanJournal):
+        db.session.add(LoanJournal)
         db.session.flush()
 
         if DaoBase.session_commit(self) == '':
-            return estate_asset
+            return LoanJournal
         else:
             return False
 
@@ -57,12 +57,12 @@ class LoanJournal(db.Model):
         else:
             return False
 
-    def output(self, asset):
+    def output(self, LoanJournal):
         return {
-            'distinct_number': asset.distinct_number,
-            'estate_id': asset.estate_id,
-            'estate_excute_type': asset.estate_excute_type,
-            'excute_price': asset.excute_price,
-            'excute_date': asset.excute_date,
-            'memo': asset.memo
+            'distinct_number': LoanJournal.distinct_number,
+            'loan_id': LoanJournal.loan_id,
+            'loan_excute_type': LoanJournal.loan_excute_type,
+            'excute_price': LoanJournal.excute_price,
+            'excute_date': LoanJournal.excute_date,
+            'memo': LoanJournal.memo
         }
