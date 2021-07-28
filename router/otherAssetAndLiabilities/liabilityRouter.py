@@ -16,7 +16,7 @@ def init_liability_api(app):
         output = []
 
         try:
-            liabilitys = Loan.query4Summary(Loan)
+            liabilitys = Loan.query4Display(Loan)
             for liability in liabilitys:
                 output.append(Loan.output4View(Loan, liability))
         except Exception as error:

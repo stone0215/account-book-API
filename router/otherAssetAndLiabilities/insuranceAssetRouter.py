@@ -16,7 +16,7 @@ def init_insurance_asset_api(app):
         output = []
 
         try:
-            insurance_assets = Insurance.query4Summary(
+            insurance_assets = Insurance.query4Display(
                 Insurance, asset_id)
             for insurance_asset in insurance_assets:
                 output.append(Insurance.output4View(

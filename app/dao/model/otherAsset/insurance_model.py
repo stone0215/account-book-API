@@ -46,7 +46,7 @@ class Insurance(db.Model):
     def queryByKey(self, insurance_id):
         return self.query.filter_by(insurance_id=insurance_id).first()
 
-    def query4Summary(self, asset_id):
+    def query4Display(self, asset_id):
         sql = []
         sql.append(
             "SELECT insurance_main.insurance_id, insurance_name, asset_id, in_account_id, in_account_name, out_account_id, out_account_name, ")
@@ -72,6 +72,28 @@ class Insurance(db.Model):
         sql.append(" ORDER BY insurance_main.insurance_id ASC")
 
         return db.engine.execute(''.join(sql))  # sql 陣列轉字串
+
+    def query4Selection(self):
+        return self.query.with_entities(self.insurance_id, self.insurance_name)
+
+    def query4Summary(self, vestingMonth):
+        sql = []
+        sql.append(
+            "SELECT '' AS vesting_month, Insurance.insurance_id AS id, insurance_name AS name, Insurance.asset_id, 0 AS surrender_value, IFNULL(cost,0) AS cost, IFNULL(buy_rate,1) AS fx_rate FROM Insurance ")
+        sql.append(
+            " LEFT JOIN (SELECT account_id, fx_code FROM Account) Account ON Account.account_id=in_account_id ")
+        sql.append(
+            " LEFT JOIN (SELECT insurance_id, SUM(excute_price) AS cost FROM Insurance_Journal ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}') Journal ON Journal.insurance_id = Insurance.insurance_id ")
+        sql.append(
+            " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', import_date) = '{vestingMonth}' GROUP BY code) Rate ON Rate.code = Account.fx_code ")
+
+        sql.append(" ORDER BY Insurance.insurance_id ASC")
+
+        return db.engine.execute(''.join(sql))
 
     def add(self, insurance):
         db.session.add(insurance)
@@ -121,4 +143,11 @@ class Insurance(db.Model):
             'insurance_id': insurance.insurance_id,
             'insurance_name': insurance.insurance_name,
             'asset_id': insurance.asset_id
+        }
+
+    def output4Selection(self, Insurance):
+        return {
+            'key': Insurance.insurance_id,
+            'value': Insurance.insurance_name,
+            'table': 'Insurance'  # 為了區分每個 id 隸屬於哪個 table，因為下拉選單id可能重複
         }

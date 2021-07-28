@@ -1,23 +1,26 @@
 -- 帳戶設定檔
 CREATE TABLE IF NOT EXISTS Account (
-	account_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	account_id NVARCHAR(20) NOT NULL,
 	name NVARCHAR(60) NOT NULL,
 	account_type VARCHAR(10) NOT NULL,
 	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
     is_calculate CHARACTER(1) NOT NULL,
 	in_use CHARACTER(1) NOT NULL,
 	discount DECIMAL(4,3), -- 最多總共四位，小數點三位
-	account_index TINYINT
+	memo NVARCHAR(300), -- 活存利率等
+	account_index TINYINT,
+	PRIMARY KEY (account_id)
 );
 
--- 帳戶餘額檔，關帳後寫入
+-- 餘額檔，關帳後寫入
 CREATE TABLE IF NOT EXISTS Account_Balance (
-	account_id INTEGER, -- 對應 Account.account_id
-	balance_month CHARACTER(6),
+	vesting_month CHARACTER(6) NOT NULL,
+	id NVARCHAR(20),
 	name NVARCHAR(60) NOT NULL,
+	-- vesting_table VARCHAR(15) NOT NULL,
     balance DECIMAL(9,2) NOT NULL,
-    buy_rate DECIMAL(5,2),
-	PRIMARY KEY (account_id, balance_month)
+	fx_rate DECIMAL(5,2) NOT NULL,
+	PRIMARY KEY (vesting_month, id)
 );
 
 -- 定期支出提醒設定檔
@@ -71,16 +74,18 @@ CREATE TABLE IF NOT EXISTS Credit_Card (
 	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
 	in_use CHARACTER(1) NOT NULL,
 	credit_card_index TINYINT,
-    note TEXT
+    note TEXT -- 記錄額度，優惠到期日，回饋上限金額之類的
 );
 
--- 信用卡餘額檔，關帳後寫入
+-- 可計算當月解約金的保險每月價值檔，關帳後寫入
 CREATE TABLE IF NOT EXISTS Credit_Card_Balance (
-	credit_card_id INTEGER, -- 對應 Credit_Card.credit_card_id
-	balance_month CHARACTER(6),
-	name NVARCHAR(60) NOT NULL, -- 對應 Credit_Card.name
+	vesting_month CHARACTER(6) NOT NULL,
+	id INTEGER,
+	name NVARCHAR(60) NOT NULL,
+	-- vesting_table VARCHAR(15) NOT NULL,
     balance DECIMAL(9,2) NOT NULL,
-	PRIMARY KEY (credit_card_id, balance_month)
+	fx_rate DECIMAL(5,2) NOT NULL,
+	PRIMARY KEY (vesting_month, id)
 );
 
 -- 不動產主檔
@@ -96,8 +101,10 @@ CREATE TABLE IF NOT EXISTS Estate (
 	-- loan_amount DECIMAL(9,2) NOT NULL,
 	-- pay_day CHAR(5), -- mm/dd
 	-- expected_end_date DATE,
-	estate_status VARCHAR(10) NOT NULL -- idle:閒置 / live:居住 / rent:出租 / sold:賣出
+	estate_status VARCHAR(10) NOT NULL, -- idle:閒置 / live:居住 / rent:出租 / sold:賣出
+	memo NVARCHAR(300) -- 寫坪數/建造日/總樓高/有什麼車位/格局/有無管理
 );
+CREATE INDEX IF NOT EXISTS Estate_idx ON Estate (estate_id, asset_id);
 
 -- 不動產流水帳檔
 CREATE TABLE IF NOT EXISTS Estate_Journal (
@@ -112,6 +119,17 @@ CREATE TABLE IF NOT EXISTS Estate_Journal (
 CREATE INDEX IF NOT EXISTS Estate_Journal_idx ON Estate_Journal (estate_id, excute_date);
 CREATE INDEX IF NOT EXISTS Estate_Income_idx ON Estate_Journal (estate_id, estate_excute_type);
 
+-- 可計算當月解約金的保險每月價值檔，關帳後寫入
+CREATE TABLE IF NOT EXISTS Estate_Net_Value_History (
+	vesting_month CHARACTER(6) NOT NULL,
+	id INTEGER, -- Estate.estate_id
+	name NVARCHAR(60) NOT NULL,
+	asset_id INTEGER NOT NULL, -- Estate.asset_id
+	market_value DECIMAL(9,2) NOT NULL, -- 從估價網站輸入對等條件取值填入
+	cost DECIMAL(9,2) NOT NULL, -- 會算入所有支出收入，為計算當下報酬率
+	PRIMARY KEY (vesting_month, id, asset_id)
+);
+
 -- 歷史匯率檔，當天有撈才會寫入
 CREATE TABLE IF NOT EXISTS FX_Rate (
 	import_date DATETIME,
@@ -122,14 +140,15 @@ CREATE TABLE IF NOT EXISTS FX_Rate (
 );
 
 -- 初始金額設定檔
-CREATE TABLE IF NOT EXISTS Initial_Setting (
-	code_id INTEGER, -- 對應 Code_Data.code_id 或 Account.account_id 或 Credit_Card.credit_card_id
-    code_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
-	initial_type VARCHAR(10) NOT NULL, -- 對應 Code_Data.code_type
-	setting_value VARCHAR(10) NOT NULL,
-	setting_date DATE NOT NULL,
-	PRIMARY KEY (code_id, initial_type)
-);
+-- CREATE TABLE IF NOT EXISTS Initial_Setting (
+-- 	id INTEGER, -- 對應 Code_Data.code_id 或 Account.account_id 或 Credit_Card.credit_card_id
+-- 	code_table VARCHAR(15) NOT NULL, -- id 對應的 table
+--     code_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
+-- 	initial_type VARCHAR(10) NOT NULL, -- id 對應的 table
+-- 	setting_value VARCHAR(10) NOT NULL,
+-- 	setting_date DATE NOT NULL,
+-- 	PRIMARY KEY (code_id, initial_type)
+-- );
 
 -- 保險流水帳檔
 CREATE TABLE IF NOT EXISTS Insurance (
@@ -161,32 +180,34 @@ CREATE TABLE IF NOT EXISTS Insurance_Journal (
 CREATE INDEX IF NOT EXISTS Insurance_Journal_idx ON Insurance_Journal (insurance_id, excute_date);
 CREATE INDEX IF NOT EXISTS Insurance_Income_idx ON Insurance_Journal (insurance_id, insurance_excute_type);
 
--- 保險餘額檔，關帳後如有異動才寫入，因為不一定是月繳
--- CREATE TABLE IF NOT EXISTS Insurance_Balance (
--- 	insurance_id INTEGER, -- 對應 Insurance.insurance_id
--- 	balance_month CHARACTER(6),
--- 	name NVARCHAR(60) NOT NULL, -- 對應 Insurance.name
---     balance DECIMAL(9,2) NOT NULL,
--- 	PRIMARY KEY (insurance_id, balance_month)
--- );
-
--- 保險歷史價值檔，每年更新解約金額
--- CREATE TABLE IF NOT EXISTS Insurance_History (
--- 	insurance_id INTEGER, -- 對應 Insurance.insurance_id
--- 	year CHARACTER(4),
--- 	value DECIMAL(10,3)  NOT NULL,
---     balance DECIMAL(10,3) NOT NULL,
---     fx_code CHARACTER(3) NOT NULL, -- 對應 Insurance.code
--- 	PRIMARY KEY (insurance_id, year)
--- );
+-- 可計算當月解約金的保險每月價值檔，關帳後寫入
+CREATE TABLE IF NOT EXISTS Insurance_Net_Value_History (
+	vesting_month CHARACTER(6) NOT NULL,
+	id INTEGER, -- Insurance.insurance_id
+	name NVARCHAR(60) NOT NULL,
+	asset_id INTEGER NOT NULL, -- Insurance.asset_id
+	surrender_value DECIMAL(9,2) NOT NULL, -- 當年度解約金，整個 Insurance_Journal 只能有一筆
+	cost DECIMAL(9,2) NOT NULL, -- 會算入配息與所有支出，為計算當下報酬率
+	fx_rate DECIMAL(5,2) NOT NULL,
+	PRIMARY KEY (vesting_month, id, asset_id)
+);
 
 -- 流水帳檔
 CREATE TABLE IF NOT EXISTS Journal (
+	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	vesting_month CHARACTER(6) NOT NULL,
 	spend_date DATE NOT NULL,
-	spend_way VARCHAR(10) NOT NULL,
+	spend_way VARCHAR(10) NOT NULL, -- account_id / credit_card_id
+	spend_way_type VARCHAR(10) NOT NULL,
+	spend_way_table VARCHAR(15) NOT NULL, -- id 對應的 table
+	-- spend_way_name NVARCHAR(60) NOT NULL,
 	action_main VARCHAR(10) NOT NULL,
+	action_main_table VARCHAR(15) NOT NULL,
+	-- action_main_name NVARCHAR(60) NOT NULL,
     action_sub VARCHAR(10) NOT NULL,
-    spending DECIMAL(9,2) NOT NULL,
+	action_sub_table VARCHAR(15) NOT NULL, -- id 對應的 table
+	-- action_sub_name NVARCHAR(60) NOT NULL,
+    spending DECIMAL(9,2) NOT NULL, -- 收入為正，支出為負
     note TEXT
 );
 CREATE INDEX IF NOT EXISTS Journal_spend_date_idx ON Journal (spend_date);
@@ -222,11 +243,12 @@ CREATE INDEX IF NOT EXISTS Loan_Income_idx ON Loan_Journal (loan_id, Loan_excute
 
 -- 貸款餘額檔，關帳後寫入
 CREATE TABLE IF NOT EXISTS Loan_Balance (
-	loan_id INTEGER, -- 對應 Loan.loan_id
-	balance_month CHARACTER(6),
-	name NVARCHAR(60) NOT NULL, -- 對應 Loan.name
+	vesting_month CHARACTER(6) NOT NULL,
+	id INTEGER,
+	name NVARCHAR(60) NOT NULL,
     balance DECIMAL(9,2) NOT NULL,
-	PRIMARY KEY (loan_id, balance_month)
+	-- fx_rate DECIMAL(5,2) NOT NULL,
+	PRIMARY KEY (vesting_month, id)
 );
 
 -- 其他資產設定檔
@@ -237,6 +259,16 @@ CREATE TABLE IF NOT EXISTS Other_Asset (
 	in_use CHARACTER(1) NOT NULL,
 	asset_index TINYINT
 );
+
+-- 歷史每月淨值檔，關帳後寫入
+-- CREATE TABLE IF NOT EXISTS Other_Asset_Net_Value_History (
+-- 	vesting_month CHARACTER(6) NOT NULL,
+-- 	id INTEGER,
+-- 	name NVARCHAR(60) NOT NULL,
+-- 	asset_type VARCHAR(10) NOT NULL,
+--     -- net_value DECIMAL(9,2) NOT NULL, 由各資產歷史淨值檔計算
+-- 	PRIMARY KEY (vesting_month, id, asset_type)
+-- );
 
 -- 股票流水帳檔
 CREATE TABLE IF NOT EXISTS Stock_Journal (
@@ -260,6 +292,20 @@ CREATE TABLE IF NOT EXISTS Stock_Detail (
 	memo NVARCHAR(300)
 );
 CREATE INDEX IF NOT EXISTS Stock_Detail_idx ON Stock_Detail (stock_id, excute_date);
+
+-- 股票每月淨值檔，關帳後寫入
+CREATE TABLE IF NOT EXISTS Stock_Net_Value_History (
+	vesting_month CHARACTER(6) NOT NULL,
+	id INTEGER, -- Stock_Journal.stock_id
+	stock_code VARCHAR(10) NOT NULL,
+	stock_name NVARCHAR(60) NOT NULL,
+	asset_id INTEGER NOT NULL,
+	amount INT NOT NULL,
+	price DECIMAL(7,3) NOT NULL,
+	cost DECIMAL(9,2) NOT NULL, -- 會算入配息，為計算當下報酬率
+	fx_rate DECIMAL(5,2) NOT NULL,
+	PRIMARY KEY (vesting_month, id, asset_id)
+);
 
 -- 股票歷史價格檔
 CREATE TABLE IF NOT EXISTS Stock_Price_History (

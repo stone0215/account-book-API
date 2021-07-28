@@ -34,7 +34,7 @@ class StockJournal(db.Model):
     def queryByKey(self, stock_id):
         return self.query.filter_by(stock_id=stock_id).first()
 
-    def query4Summary(self, asset_id):
+    def query4Display(self, asset_id):
         sql = []
         sql.append("SELECT *, ROUND(100*gain_lose/total_cost,2) AS ROI, ")
         sql.append(
@@ -90,6 +90,31 @@ class StockJournal(db.Model):
         sql.append(" ORDER BY stock_main.stock_id ASC)")
 
         return db.engine.execute(''.join(sql))  # sql 陣列轉字串
+
+    def query4Summary(self, vestingMonth):
+        sql = []
+        sql.append(
+            "SELECT '' AS vesting_month, Journal.stock_id AS id, Journal.stock_code, stock_name, Journal.asset_id, ")
+        sql.append(
+            " IFNULL(amount,0) AS amount, close_price AS price, IFNULL(cost,0) AS cost, IFNULL(buy_rate,1) AS fx_rate FROM Stock_Journal Journal ")
+        sql.append(
+            " LEFT JOIN (SELECT account_id, fx_code FROM Account) Account ON Account.account_id=Journal.account_id ")
+        sql.append(
+            " LEFT JOIN (SELECT stock_id, SUM(excute_amount) AS amount, SUM(excute_price) AS cost FROM Stock_Detail ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}') Detail ON Detail.stock_id = Journal.stock_id ")
+        sql.append(
+            " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', import_date) = '{vestingMonth}' GROUP BY code) Rate ON Rate.code = Account.fx_code ")
+        sql.append(
+            " LEFT JOIN (SELECT stock_code, close_price, MAX(fetch_date) FROM Stock_Price_History ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', fetch_date) = '{vestingMonth}' GROUP BY stock_code) Price ON Price.stock_code = Journal.stock_code ")
+
+        sql.append(" ORDER BY Journal.stock_id ASC")
+
+        return db.engine.execute(''.join(sql))
 
     def add(self, stock_journal):
         db.session.add(stock_journal)

@@ -18,7 +18,7 @@ class OtherAsset(db.Model):
         self.asset_name = asset_name
         self.asset_type = asset_type
         self.in_use = in_use  # Y/M
-        self.asset_index = asset_index
+        self.asset_index = asset_index or ''
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -37,7 +37,12 @@ class OtherAsset(db.Model):
         db.session.add(other_asset)
         db.session.flush()
 
-        return other_asset
+        # return other_asset // 如後續要寫入 Code table 打開這段，並註解以下
+
+        if DaoBase.session_commit(self) == '':
+            return other_asset
+        else:
+            return False
 
     def update(self):
         if DaoBase.session_commit(self) == '':

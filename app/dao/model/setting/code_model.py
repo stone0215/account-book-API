@@ -53,6 +53,12 @@ class Code(db.Model):
     def query4BudgetSelection(self):
         return self.query.with_entities(self.code_id, self.name, self.code_type).filter_by(in_use='Y', code_group=None).filter(or_(Code.code_type == 'Fixed', Code.code_type == 'Floating')).all()
 
+    def query4Selection(self):
+        return self.query.with_entities(self.code_id, self.name, self.code_type, self.code_index).filter_by(in_use='Y', code_group=None)
+
+    def query4SubSelection(self, parent_id):
+        return self.query.with_entities(self.code_id, self.name, self.code_index).filter_by(code_group=parent_id, in_use='Y').order_by(asc(self.code_index)).all()
+
     def add(self, code):
         db.session.add(code)
         db.session.flush()
@@ -91,4 +97,21 @@ class Code(db.Model):
             'name': Code.name,
             'in_use': Code.in_use,
             'code_index': Code.code_index
+        }
+
+    def output4Selection(self, Code):
+        return {
+            'key': Code.code_id,
+            'value': Code.name,
+            'index': Code.code_index,
+            'type': Code.code_type,
+            'table': 'Code'  # 為了區分每個 id 隸屬於哪個 table，因為下拉選單id可能重複
+        }
+
+    def output4SubSelection(self, Code):
+        return {
+            'key': Code.code_id,
+            'value': Code.name,
+            'index': Code.code_index,
+            'table': 'Code'  # 為了區分每個 id 隸屬於哪個 table，因為下拉選單id可能重複
         }

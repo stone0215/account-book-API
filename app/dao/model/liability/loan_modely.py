@@ -46,7 +46,7 @@ class Loan(db.Model):
     def queryByKey(self, loan_id):
         return self.query.filter_by(loan_id=loan_id).first()
 
-    def query4Summary(self):
+    def query4Display(self):
         sql = []
         sql.append(
             "SELECT loan_main.loan_id, loan_name, loan_type, apply_date, grace_expire_date, amount, ")
@@ -72,6 +72,17 @@ class Loan(db.Model):
 
     def query4Selection(self):
         return self.query.with_entities(self.loan_id, self.loan_name, self.loan_index)
+
+    def query4Summary(self, vestingMonth):
+        sql = []
+        sql.append(
+            "SELECT '' AS vesting_month, loan_id AS id, loan_name AS name, IFNULL(balance,0) AS balance FROM Loan ")
+        sql.append(
+            f" LEFT JOIN Loan_Balance Balance ON Balance.vesting_month = '{vestingMonth}' ")
+
+        sql.append(" ORDER BY loan_id ASC")
+
+        return db.engine.execute(''.join(sql))
 
     def add(self, Loan):
         db.session.add(Loan)
@@ -130,5 +141,5 @@ class Loan(db.Model):
             'key': Loan.loan_id,
             'value': Loan.loan_name,
             'index:': Loan.loan_index,
-            'type': 'Loan'
+            'table': 'Loan'
         }

@@ -16,7 +16,7 @@ def init_stock_asset_api(app):
         output = []
 
         try:
-            stock_assets = StockJournal.query4Summary(StockJournal, asset_id)
+            stock_assets = StockJournal.query4Display(StockJournal, asset_id)
             for stock_asset in stock_assets:
                 output.append(StockJournal.output4View(
                     StockJournal, stock_asset))

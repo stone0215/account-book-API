@@ -19,17 +19,19 @@ class Estate(db.Model):
     down_payment = db.Column(db.Float, nullable=False)
     loan_id = db.Column(db.Integer)
     estate_status = db.Column(db.String(10), nullable=False)
+    memo = db.Column(db.Text)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, estate_name, estate_type, estate_address, asset_id, obtain_date, down_payment, loan_id, estate_status):
-        self.estate_name = estate_name
-        self.estate_type = estate_type
-        self.estate_address = estate_address
-        self.asset_id = asset_id
-        self.obtain_date = obtain_date
-        self.down_payment = down_payment
-        self.loan_id = loan_id if loan_id else None
-        self.estate_status = estate_status
+    def __init__(self, Estate):
+        self.estate_name = Estate['estate_name']
+        self.estate_type = Estate['estate_type']
+        self.estate_address = Estate['estate_address']
+        self.asset_id = Estate['asset_id']
+        self.obtain_date = Estate['obtain_date']
+        self.down_payment = Estate['down_payment']
+        self.loan_id = Estate['loan_id'] if Estate['loan_id'] else None
+        self.estate_status = Estate['estate_status']
+        self.memo = Estate['memo'] if Estate['memo'] else None
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -38,12 +40,12 @@ class Estate(db.Model):
     def queryByKey(self, estate_id):
         return self.query.filter_by(estate_id=estate_id).first()
 
-    def query4Summary(self, asset_id):
+    def query4Display(self, asset_id):
         sql = []
         sql.append(
             "SELECT estate_main.estate_id, estate_name, estate_type, estate_address, asset_id, obtain_date, down_payment, estate_main.loan_id, loan_name, ")
         sql.append(
-            "estate_status, Estate_Amount.cost, Estate_Profit.profit ")
+            "estate_status, memo, Estate_Amount.cost, Estate_Profit.profit ")
         sql.append("FROM Estate estate_main ")
         sql.append(
             "LEFT JOIN (SELECT estate_id, estate_excute_type, SUM(IFNULL(excute_price,0)) AS cost ")
@@ -63,16 +65,27 @@ class Estate(db.Model):
         sql.append(" WHERE asset_id=" + str(asset_id))
         sql.append(" ORDER BY estate_main.estate_id ASC")
 
-        print(''.join(sql))
-
         return db.engine.execute(''.join(sql))  # sql 陣列轉字串
 
-    def add(self, insurance):
-        db.session.add(insurance)
+    def query4Summary(self, vestingMonth):
+        sql = []
+        sql.append(
+            "SELECT '' AS vesting_month, Estate.estate_id AS id, estate_name AS name, Estate.asset_id, 0 AS market_value, IFNULL(cost,0) AS cost FROM Estate ")
+        sql.append(
+            " LEFT JOIN (SELECT estate_id, SUM(excute_price) AS cost FROM Estate_Journal ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}') Journal ON Journal.estate_id = Estate.estate_id ")
+
+        sql.append(" ORDER BY Estate.estate_id ASC")
+
+        return db.engine.execute(''.join(sql))
+
+    def add(self, Estate):
+        db.session.add(Estate)
         db.session.flush()
 
         if DaoBase.session_commit(self) == '':
-            return insurance
+            return Estate
         else:
             return False
 
@@ -102,7 +115,8 @@ class Estate(db.Model):
             'loan_name': estate.loan_name,
             'cost': estate.cost,
             'profit': estate.profit,
-            'estate_status': estate.estate_status
+            'estate_status': estate.estate_status,
+            'memo': estate.memo
             # 'gain_lose': estate.gain_lose,
             # 'ROI': estate.ROI
         }

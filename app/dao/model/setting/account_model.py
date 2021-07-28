@@ -5,24 +5,27 @@ db = DaoBase().getDB()
 
 class Account(db.Model):
     __tablename__ = 'Account'
-    account_id = db.Column(db.Integer, primary_key=True)
+    account_id = db.Column(db.String(20), primary_key=True)
     name = db.Column(db.String(60), nullable=False, index=True)
     account_type = db.Column(db.String(10), nullable=False, index=True)
     fx_code = db.Column(db.String(3), nullable=False)
     is_calculate = db.Column(db.String(1), nullable=False)
     in_use = db.Column(db.String(1), nullable=False, index=True)
     discount = db.Column(db.Float)
+    memo = db.Column(db.Text)
     account_index = db.Column(db.SmallInteger)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, name, account_type, fx_code, is_calculate, in_use, discount, account_index):
-        self.name = name
-        self.account_type = account_type  # N：一般帳戶/ F：財務規劃帳戶
-        self.fx_code = fx_code
-        self.is_calculate = is_calculate
-        self.in_use = in_use  # Y/M
-        self.discount = discount
-        self.account_index = account_index or ''
+    def __init__(self, Account):
+        self.account_id = Account['account_id']
+        self.name = Account['name']
+        self.account_type = Account['account_type']
+        self.fx_code = Account['fx_code']
+        self.is_calculate = Account['is_calculate']
+        self.in_use = Account['in_use']  # Y/M
+        self.discount = Account['discount']
+        self.memo = Account['memo']
+        self.account_index = Account['account_index'] or None
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -50,13 +53,31 @@ class Account(db.Model):
         return db.engine.execute(''.join(sql))
 
     def query4Selection(self):
-        return self.query.with_entities(self.account_id, self.name, self.account_index).filter_by(in_use='Y')
+        return self.query.with_entities(self.account_id, self.name, self.account_type, self.account_index).filter_by(in_use='Y')
+
+    def query4Summary(self, vestingMonth):
+        sql = []
+        sql.append(
+            "SELECT '' AS vesting_month, account_id AS id, Account.name, IFNULL(balance,0) AS balance, IFNULL(buy_rate,1) AS fx_rate FROM Account ")
+        sql.append(
+            f" LEFT JOIN Account_Balance Balance ON Balance.vesting_month = '{vestingMonth}' ")
+        sql.append(
+            " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', import_date) = '{vestingMonth}' GROUP BY code) Rate ON Rate.code = Account.fx_code ")
+
+        sql.append(" ORDER BY account_id ASC")
+
+        return db.engine.execute(''.join(sql))
 
     def add(self, account):
         db.session.add(account)
         db.session.flush()
 
-        return account
+        if DaoBase.session_commit(self) == '':
+            return account
+        else:
+            return False
 
     def update(self):
         if DaoBase.session_commit(self) == '':
@@ -80,6 +101,7 @@ class Account(db.Model):
             'is_calculate': Account.is_calculate,
             'in_use': Account.in_use,
             'discount': Account.discount,
+            'memo': Account.memo,
             'account_index': Account.account_index
         }
 
@@ -88,5 +110,6 @@ class Account(db.Model):
             'key': Account.account_id,
             'value': Account.name,
             'index': Account.account_index,
-            'type': 'Account'
+            'type': Account.account_type,
+            'table': 'Account'  # 為了區分每個 id 隸屬於哪個 table，因為下拉選單id可能重複
         }

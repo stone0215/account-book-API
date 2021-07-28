@@ -29,24 +29,22 @@ def init_account_api(app):
             inputData = request.get_json(force=True)
 
             # 新增帳戶
-            account = Account(name=inputData['name'], account_type=inputData['account_type'],
-                              fx_code=inputData['fx_code'], is_calculate=inputData['is_calculate'],
-                              in_use=inputData['in_use'], discount=inputData['discount'], account_index=inputData['account_index'])
-            outputData = Account.add(Account, account)
+            account = Account(inputData)
+            result = Account.add(Account, account)
 
             # 新增初始值
-            initial = InitialSetting(code_id=account.account_id, code_name=account.name,
-                                     initial_type='Account', setting_value=0)
-            result = InitialSetting.add(InitialSetting, initial)
+            # initial = InitialSetting(code_id=account.account_id, code_name=account.name,
+            #                          initial_type='Account', setting_value=0)
+            # result = InitialSetting.add(InitialSetting, initial)
 
             if result:
-                return jsonify(ResponseFormat.true_return(ResponseFormat, Account.output(Account, outputData)))
+                return jsonify(ResponseFormat.true_return(ResponseFormat, Account.output(Account, result)))
             else:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to add account data'))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 
-    @app.route('/account/<int:account_id>', methods=['PUT'])
+    @app.route('/account/<string:account_id>', methods=['PUT'])
     def updateAccount(account_id):
         try:
             account = Account.queryByKey(Account, account_id)
@@ -61,6 +59,7 @@ def init_account_api(app):
                 account.is_calculate = inputData['is_calculate']
                 account.in_use = inputData['in_use']
                 account.discount = inputData['discount']
+                account.memo = inputData['memo']
                 account.account_index = inputData['account_index']
                 if Account.update(Account):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))

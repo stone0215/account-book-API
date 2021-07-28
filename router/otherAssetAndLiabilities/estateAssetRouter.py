@@ -16,7 +16,7 @@ def init_estate_asset_api(app):
         output = []
 
         try:
-            estate_assets = Estate.query4Summary(
+            estate_assets = Estate.query4Display(
                 Estate, asset_id)
             for estate_asset in estate_assets:
                 output.append(Estate.output4View(
@@ -34,12 +34,10 @@ def init_estate_asset_api(app):
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
 
-            estate_asset = Estate(asset_id=inputData['asset_id'], estate_name=inputData['estate_name'],
-                                  estate_type=inputData['estate_type'], estate_address=inputData['estate_address'],
-                                  obtain_date=datetime.strptime(
-                inputData['obtain_date'], date_format), down_payment=inputData['down_payment'],
-                loan_id=inputData['loan_id'], estate_status=inputData['estate_status'])
-            result = Estate.add(Estate, estate_asset)
+            inputData['obtain_date'] = datetime.strptime(
+                inputData['obtain_date'], date_format)
+            print(inputData)
+            result = Estate.add(Estate, Estate(inputData))
 
             if result:
                 return jsonify(ResponseFormat.true_return(ResponseFormat, Estate.output(Estate, result)))
@@ -68,6 +66,7 @@ def init_estate_asset_api(app):
                 estate_asset.down_payment = inputData['down_payment']
                 estate_asset.loan_id = inputData['loan_id'] if inputData['loan_id'] else None
                 estate_asset.estate_status = inputData['estate_status']
+                estate_asset.memo = inputData['memo']
                 if Estate.update(Estate):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
                 else:

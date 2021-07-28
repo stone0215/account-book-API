@@ -57,6 +57,21 @@ class CreditCard(db.Model):
     def query4Selection(self):
         return self.query.with_entities(self.credit_card_id, self.card_name, self.credit_card_index).filter_by(in_use='Y')
 
+    def query4Summary(self, vestingMonth):
+        sql = []
+        sql.append(
+            "SELECT '' AS vesting_month, credit_card_id AS id, card_name AS name, IFNULL(balance,0) AS balance, IFNULL(buy_rate,1) AS fx_rate FROM Credit_Card ")
+        sql.append(
+            f" LEFT JOIN Credit_Card_Balance Balance ON Balance.vesting_month = '{vestingMonth}' ")
+        sql.append(
+            " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', import_date) = '{vestingMonth}' GROUP BY code) Rate ON Rate.code = Credit_Card.fx_code ")
+
+        sql.append(" ORDER BY credit_card_id ASC")
+
+        return db.engine.execute(''.join(sql))
+
     def add(self, credit_card):
         db.session.add(credit_card)
         db.session.flush()
@@ -95,5 +110,5 @@ class CreditCard(db.Model):
             'key': CreditCard.credit_card_id,
             'value': CreditCard.card_name,
             'index': CreditCard.credit_card_index,
-            'type': 'CreditCard'
+            'table': 'Credit_Card'
         }

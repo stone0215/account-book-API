@@ -45,11 +45,11 @@ def init_other_asset_api(app):
                 'asset_type'], in_use=inputData['in_use'], asset_index=inputData['asset_index'])
             outputData = OtherAsset.add(OtherAsset, other_asset)
             # 新增代碼主選單
-            code = Code(code_type='Asset', name=inputData['asset_name'],
-                        in_use=inputData['in_use'], code_index='')
-            result = Code.add(Code, code)
+            # code = Code(code_type='Asset', name=inputData['asset_name'],
+            #             in_use=inputData['in_use'], code_index='')
+            # result = Code.add(Code, code)
 
-            if result:
+            if outputData:
                 return jsonify(ResponseFormat.true_return(ResponseFormat, OtherAsset.output(OtherAsset, outputData)))
             else:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to add asset data'))
