@@ -30,10 +30,7 @@ def init_stock_asset_api(app):
         try:
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
-
-            stock_asset = StockJournal(stock_code=inputData['stock_code'], stock_name=inputData['stock_name'],
-                                       asset_id=inputData['asset_id'], account_id=inputData['account_id'],
-                                       account_name=inputData['account_name'], expected_spend=inputData['expected_spend'])
+            stock_asset = StockJournal(inputData)
             result = StockJournal.add(StockJournal, stock_asset)
 
             if result:
@@ -53,9 +50,7 @@ def init_stock_asset_api(app):
                 inputData = request.get_json(force=True)
 
                 stock_asset.stock_name = inputData['stock_name']
-                other_asset.account_id = inputData['account_id']
-                other_asset.account_name = inputData['account_name']
-                other_asset.expected_spend = inputData['expected_spend'] if inputData['expected_spend'] else None
+                stock_asset.expected_spend = inputData['expected_spend'] if inputData['expected_spend'] else None
                 if StockJournal.update(StockJournal):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
                 else:
@@ -97,10 +92,9 @@ def init_stock_asset_api(app):
         try:
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
-
-            stock_detail = StockDetail(stock_id=inputData['stock_id'], excute_type=inputData['excute_type'],
-                                       excute_amount=inputData['excute_amount'], excute_price=inputData['excute_price'],
-                                       excute_date=datetime.strptime(inputData['excute_date'], date_format), memo=inputData['memo'])
+            inputData['excute_date'] = datetime.strptime(
+                inputData['excute_date'], date_format)
+            stock_detail = StockDetail(inputData)
             result = StockDetail.add(StockDetail, stock_detail)
 
             if result:
@@ -126,6 +120,8 @@ def init_stock_asset_api(app):
                 stock_detail.excute_price = inputData['excute_price']
                 stock_detail.excute_date = datetime.strptime(
                     inputData['excute_date'], date_format)
+                stock_detail.account_id = inputData['account_id']
+                stock_detail.account_name = inputData['account_name']
                 stock_detail.memo = inputData['memo']
 
                 if StockDetail.update(StockDetail):

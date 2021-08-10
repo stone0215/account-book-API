@@ -15,6 +15,7 @@ from app.dao.model.monthlyReport.loan_balance_model import LoanBalance
 from app.dao.model.monthlyReport.stock_net_value_model import StockNetValueHistory
 from app.dao.model.otherAsset.estate_model import Estate
 from app.dao.model.otherAsset.insurance_model import Insurance
+from app.dao.model.otherAsset.other_asset_model import OtherAsset
 from app.dao.model.otherAsset.stock_journal_model import StockJournal
 from app.dao.model.setting.account_model import Account
 from app.dao.model.setting.credit_card_model import CreditCard
@@ -72,6 +73,7 @@ def init_journal_api(app):
                 journal.spend_way_type = inputData['spend_way_type']
                 journal.spend_way_table = inputData['spend_way_table']
                 journal.action_main = inputData['action_main']
+                journal.action_main_type = inputData['action_main_type']
                 journal.action_main_table = inputData['action_main_table']
                 journal.action_sub = inputData['action_sub']
                 journal.action_sub_table = inputData['action_sub_table']
@@ -174,8 +176,6 @@ def init_journal_api(app):
                     # 處理加項金額
                     elif journal.action_sub_table == 'Credit_Card' and obj.id == int(journal.action_sub):
                         obj.balance -= journal.spending
-                print('123', journal.spend_way_table,
-                      obj.id, journal.spend_way, journal.action_sub)
 
                 cardArray.append(obj)
 
@@ -187,5 +187,39 @@ def init_journal_api(app):
             else:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to process summary data'))
         except Exception as error:
-            print('789', error)
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+
+    @app.route('/journal/expenditure-ratio/<string:vestingMonth>', methods=['GET'])
+    def getExpenditureRatioByVestingMonth(vestingMonth):
+
+        try:
+            journals = Journal.queryForExpenditureRatio(
+                Journal, vestingMonth, 'action_main_type')
+
+            innerPie = []
+            for key, groups in groupby(journals, lambda item: item.action_main_type):
+                spendings = [item.spending for item in list(groups)]
+                innerPie.append(
+                    {'name': key, 'value': abs(sum(spendings))})  # 取絕對值計算百分比
+
+            # 不確定是因為 groupby 後 journals 被清空還是什麼原因導致資料表被釋放，所以需要重撈，之後可以考慮改 panda
+            journals = Journal.queryForExpenditureRatio(
+                Journal, vestingMonth, 'action_main')
+            outerPie = []
+            for key, groups in groupby(journals, lambda item: (item.action_main, item.action_main_name, item.action_main_type)):
+                spendings = [item.spending for item in list(groups)]
+                outerPie.append({'name': key[1],
+                                 'type': key[2],
+                                 'value': sum(spendings)})
+
+            # assets = OtherAsset.queryForInvestRatio(OtherAsset, vestingMonth)
+            # innerPie = []
+            # for key, groups in groupby(journals, lambda item: item.action_main_type):
+            #     spendings = [item.spending for item in list(groups)]
+            #     innerPie.append(
+            #         {'name': key, 'value': abs(sum(spendings))})  # 取絕對值計算百分比
+
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, {'innerPie': innerPie, 'outerPie': outerPie}))

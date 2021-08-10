@@ -5,7 +5,8 @@ db = DaoBase().getDB()
 
 class Account(db.Model):
     __tablename__ = 'Account'
-    account_id = db.Column(db.String(20), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    account_id = db.Column(db.String(20))
     name = db.Column(db.String(60), nullable=False, index=True)
     account_type = db.Column(db.String(10), nullable=False, index=True)
     fx_code = db.Column(db.String(3), nullable=False)
@@ -31,8 +32,8 @@ class Account(db.Model):
     def __str__(self):
         return self
 
-    def queryByKey(self, account_id):
-        return self.query.filter_by(account_id=account_id).first()
+    def queryByKey(self, id):
+        return self.query.filter_by(id=id).first()
 
     def queryByConditions(self, conditions):
         sql = []
@@ -53,12 +54,12 @@ class Account(db.Model):
         return db.engine.execute(''.join(sql))
 
     def query4Selection(self):
-        return self.query.with_entities(self.account_id, self.name, self.account_type, self.account_index).filter_by(in_use='Y')
+        return self.query.with_entities(self.id, self.name, self.account_type, self.account_index).filter_by(in_use='Y')
 
     def query4Summary(self, vestingMonth):
         sql = []
         sql.append(
-            "SELECT '' AS vesting_month, account_id AS id, Account.name, IFNULL(balance,0) AS balance, IFNULL(buy_rate,1) AS fx_rate FROM Account ")
+            "SELECT '' AS vesting_month, Account.id, Account.name, IFNULL(balance,0) AS balance, IFNULL(buy_rate,1) AS fx_rate FROM Account ")
         sql.append(
             f" LEFT JOIN Account_Balance Balance ON Balance.vesting_month = '{vestingMonth}' ")
         sql.append(
@@ -66,7 +67,7 @@ class Account(db.Model):
         sql.append(
             f" WHERE STRFTIME('%Y%m', import_date) = '{vestingMonth}' GROUP BY code) Rate ON Rate.code = Account.fx_code ")
 
-        sql.append(" ORDER BY account_id ASC")
+        sql.append(" ORDER BY id ASC")
 
         return db.engine.execute(''.join(sql))
 
@@ -85,8 +86,8 @@ class Account(db.Model):
         else:
             return False
 
-    def delete(self, account_id):
-        self.query.filter_by(account_id=account_id).delete()
+    def delete(self, id):
+        self.query.filter_by(id=id).delete()
         if DaoBase.session_commit(self) == '':
             return True
         else:
@@ -94,6 +95,7 @@ class Account(db.Model):
 
     def output(self, Account):
         return {
+            'id': Account.id,
             'account_id': Account.account_id,
             'name': Account.name,
             'account_type': Account.account_type,
@@ -107,7 +109,7 @@ class Account(db.Model):
 
     def output4Selection(self, Account):
         return {
-            'key': Account.account_id,
+            'key': Account.id,
             'value': Account.name,
             'index': Account.account_index,
             'type': Account.account_type,

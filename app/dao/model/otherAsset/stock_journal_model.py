@@ -14,18 +14,14 @@ class StockJournal(db.Model):
     stock_code = db.Column(db.String(10), nullable=False)
     stock_name = db.Column(db.String(60), nullable=False)
     asset_id = db.Column(db.Integer, nullable=False)
-    account_id = db.Column(db.Integer, nullable=False)
-    account_name = db.Column(db.String(60), nullable=False)
     expected_spend = db.Column(db.Float)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, stock_name, stock_code, asset_id, account_id, account_name, expected_spend):
-        self.stock_name = stock_name
-        self.asset_id = asset_id
-        self.stock_code = stock_code
-        self.account_id = account_id
-        self.account_name = account_name
-        self.expected_spend = expected_spend if expected_spend else None
+    def __init__(self, StockJournal):
+        self.stock_name = StockJournal['stock_name']
+        self.asset_id = StockJournal['asset_id']
+        self.stock_code = StockJournal['stock_code']
+        self.expected_spend = StockJournal['expected_spend'] if StockJournal['expected_spend'] else None
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -98,11 +94,11 @@ class StockJournal(db.Model):
         sql.append(
             " IFNULL(amount,0) AS amount, close_price AS price, IFNULL(cost,0) AS cost, IFNULL(buy_rate,1) AS fx_rate FROM Stock_Journal Journal ")
         sql.append(
-            " LEFT JOIN (SELECT account_id, fx_code FROM Account) Account ON Account.account_id=Journal.account_id ")
-        sql.append(
-            " LEFT JOIN (SELECT stock_id, SUM(excute_amount) AS amount, SUM(excute_price) AS cost FROM Stock_Detail ")
+            " LEFT JOIN (SELECT stock_id, MAX(account_id), SUM(excute_amount) AS amount, SUM(excute_price) AS cost FROM Stock_Detail ")
         sql.append(
             f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}') Detail ON Detail.stock_id = Journal.stock_id ")
+        sql.append(
+            " LEFT JOIN (SELECT account_id, fx_code FROM Account) Account ON Account.account_id=Stock_Detail.account_id ")
         sql.append(
             " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
         sql.append(
@@ -157,8 +153,6 @@ class StockJournal(db.Model):
             'stock_code': stock.stock_code,
             'stock_name': stock.stock_name,
             'asset_id': stock.asset_id,
-            'account_id': stock.account_id,
-            'account_name': stock.account_name,
             'expected_spend': stock.expected_spend,
             'now_price': 10,  # 先寫死 data['price'],
             'hold_amount': stock.hold_amount,

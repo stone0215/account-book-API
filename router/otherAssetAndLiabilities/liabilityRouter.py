@@ -44,16 +44,11 @@ def init_liability_api(app):
         try:
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
-
-            liability = Loan(loan_name=inputData['loan_name'], loan_type=inputData['loan_type'],
-                             account_id=inputData['account_id'], account_name=inputData['account_name'],
-                             interest_rate=inputData['interest_rate'], perid=inputData['perid'],
-                             apply_date=datetime.strptime(
-                                 inputData['apply_date'], date_format),
-                             grace_expire_date=datetime.strptime(
-                                 inputData['grace_expire_date'], date_format) if inputData['grace_expire_date'] else None,
-                             pay_day=inputData['pay_day'], amount=inputData['amount'],
-                             repayed=inputData['repayed'], loan_index=inputData['loan_index'])
+            inputData['apply_date'] = datetime.strptime(
+                inputData['apply_date'], date_format)
+            inputData['grace_expire_date'] = datetime.strptime(
+                inputData['grace_expire_date'], date_format) if inputData['grace_expire_date'] else None
+            liability = Loan(inputData)
 
             result = Loan.add(Loan, liability)
 
@@ -80,7 +75,7 @@ def init_liability_api(app):
                 liability.account_id = inputData['account_id']
                 liability.account_name = inputData['account_name']
                 liability.interest_rate = inputData['interest_rate']
-                liability.perid = inputData['perid']
+                liability.period = inputData['period']
                 liability.apply_date = datetime.strptime(
                     inputData['apply_date'], date_format)
                 liability.grace_expire_date = datetime.strptime(

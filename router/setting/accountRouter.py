@@ -44,15 +44,16 @@ def init_account_api(app):
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 
-    @app.route('/account/<string:account_id>', methods=['PUT'])
-    def updateAccount(account_id):
+    @app.route('/account/<int:id>', methods=['PUT'])
+    def updateAccount(id):
         try:
-            account = Account.queryByKey(Account, account_id)
+            account = Account.queryByKey(Account, id)
             if account is None:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
             else:
                 inputData = request.get_json(force=True)
 
+                account.account_id = inputData['account_id']
                 account.name = inputData['name']
                 account.account_type = inputData['account_type']
                 account.fx_code = inputData['fx_code']
@@ -68,14 +69,14 @@ def init_account_api(app):
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 
-    @app.route('/account/<int:account_id>', methods=['DELETE'])
-    def deleteAccount(account_id):
+    @app.route('/account/<int:id>', methods=['DELETE'])
+    def deleteAccount(id):
         try:
-            account = Account.queryByKey(Account, account_id)
+            account = Account.queryByKey(Account, id)
             if account is None:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'data not found'))
             else:
-                if Account.delete(Account, account_id):
+                if Account.delete(Account, id):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
                 else:
                     return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to delete account data'))

@@ -1,6 +1,7 @@
 -- 帳戶設定檔
 CREATE TABLE IF NOT EXISTS Account (
-	account_id NVARCHAR(20) NOT NULL,
+	id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	account_id NVARCHAR(20),
 	name NVARCHAR(60) NOT NULL,
 	account_type VARCHAR(10) NOT NULL,
 	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
@@ -8,8 +9,7 @@ CREATE TABLE IF NOT EXISTS Account (
 	in_use CHARACTER(1) NOT NULL,
 	discount DECIMAL(4,3), -- 最多總共四位，小數點三位
 	memo NVARCHAR(300), -- 活存利率等
-	account_index TINYINT,
-	PRIMARY KEY (account_id)
+	account_index TINYINT
 );
 
 -- 餘額檔，關帳後寫入
@@ -198,10 +198,11 @@ CREATE TABLE IF NOT EXISTS Journal (
 	vesting_month CHARACTER(6) NOT NULL,
 	spend_date DATE NOT NULL,
 	spend_way VARCHAR(10) NOT NULL, -- account_id / credit_card_id
-	spend_way_type VARCHAR(10) NOT NULL,
+	spend_way_type VARCHAR(20) NOT NULL,
 	spend_way_table VARCHAR(15) NOT NULL, -- id 對應的 table
 	-- spend_way_name NVARCHAR(60) NOT NULL,
 	action_main VARCHAR(10) NOT NULL,
+	action_main_type VARCHAR(20) NOT NULL,
 	action_main_table VARCHAR(15) NOT NULL,
 	-- action_main_name NVARCHAR(60) NOT NULL,
     action_sub VARCHAR(10) NOT NULL,
@@ -220,7 +221,7 @@ CREATE TABLE IF NOT EXISTS Loan (
 	account_id INTEGER NOT NULL, -- 對應 Account.account_id
     account_name NVARCHAR(60) NOT NULL, -- 對應 Account.name
 	interest_rate DECIMAL(4,3) NOT NULL,
-	perid INTEGER NOT NULL,
+	period INTEGER NOT NULL,
 	apply_date DATE NOT NULL,
 	grace_expire_date DATE,
 	pay_day VARCHAR(2) NOT NULL,
@@ -276,8 +277,6 @@ CREATE TABLE IF NOT EXISTS Stock_Journal (
 	stock_code VARCHAR(10) NOT NULL,
 	stock_name NVARCHAR(60) NOT NULL,
 	asset_id INTEGER NOT NULL,
-	account_id INTEGER NOT NULL,
-    account_name NVARCHAR(60) NOT NULL,
 	expected_spend INTEGER
 );
 
@@ -287,8 +286,10 @@ CREATE TABLE IF NOT EXISTS Stock_Detail (
 	stock_id INTEGER NOT NULL,
 	excute_type VARCHAR(10) NOT NULL, -- buy:買入/ sell:賣出/ stock:配股/ cash:配息
 	excute_amount INT, --以股為單位
-	excute_price DECIMAL(7,3),
+	excute_price DECIMAL(9,3),
 	excute_date DATE NOT NULL,
+	account_id INTEGER NOT NULL,
+    account_name NVARCHAR(60) NOT NULL,
 	memo NVARCHAR(300)
 );
 CREATE INDEX IF NOT EXISTS Stock_Detail_idx ON Stock_Detail (stock_id, excute_date);

@@ -16,7 +16,7 @@ class Loan(db.Model):
     account_id = db.Column(db.Integer, nullable=False)
     account_name = db.Column(db.String(60), nullable=False)
     interest_rate = db.Column(db.Float, nullable=False)
-    perid = db.Column(db.Integer, nullable=False)
+    period = db.Column(db.Integer, nullable=False)
     apply_date = db.Column(db.DateTime, nullable=False, index=True)
     grace_expire_date = db.Column(db.DateTime)
     pay_day = db.Column(db.String(2), nullable=False)
@@ -25,19 +25,19 @@ class Loan(db.Model):
     loan_index = db.Column(db.SmallInteger)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, loan_name, loan_type, account_id, account_name, interest_rate, perid, apply_date, grace_expire_date, pay_day, amount, repayed, loan_index):
-        self.loan_name = loan_name
-        self.loan_type = loan_type
-        self.account_id = account_id
-        self.account_name = account_name
-        self.interest_rate = interest_rate
-        self.perid = perid
-        self.apply_date = apply_date
-        self.grace_expire_date = grace_expire_date or ''
-        self.pay_day = pay_day
-        self.amount = amount
-        self.repayed = repayed
-        self.loan_index = loan_index or ''
+    def __init__(self, Loan):
+        self.loan_name = Loan['loan_name']
+        self.loan_type = Loan['loan_type']
+        self.account_id = Loan['account_id']
+        self.account_name = Loan['account_name']
+        self.interest_rate = Loan['interest_rate']
+        self.period = Loan['period']
+        self.apply_date = Loan['apply_date']
+        self.grace_expire_date = Loan['grace_expire_date']
+        self.pay_day = Loan['pay_day']
+        self.amount = Loan['amount']
+        self.repayed = Loan['repayed']
+        self.loan_index = Loan['loan_index'] if Loan['loan_index'] else None
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -127,7 +127,7 @@ class Loan(db.Model):
             'account_id': Loan.account_id,
             'account_name': Loan.account_name,
             'interest_rate': Loan.interest_rate,
-            'perid': Loan.perid,
+            'period': Loan.period,
             'apply_date': Loan.apply_date,
             'grace_expire_date': Loan.grace_expire_date,
             'pay_day': Loan.pay_day,

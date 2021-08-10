@@ -33,6 +33,36 @@ class OtherAsset(db.Model):
     def getDistinctItems(self):
         return self.query.with_entities(self.asset_id, self.asset_name, self.asset_type).filter_by(in_use='Y').distinct().all()
 
+    def queryForInvestRatio(self, vestingMonth):
+        sql = []
+        sql.append(
+            "SELECT estate_id, estate_excute_type, excute_price, excute_date, Other_Asset.asset_id, asset_name FROM Estate_Journal ")
+        sql.append(
+            " LEFT JOIN Estate ON Estate_Journal.estate_id=Estate.estate_id ")
+        sql.append(
+            " LEFT JOIN Other_Asset ON Estate.asset_id=Other_Asset.asset_id ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' ")
+        sql.append(
+            " UNION ALL SELECT insurance_id, insurance_excute_type, excute_price, excute_date, Other_Asset.asset_id, asset_name FROM Insurance_Journal ")
+        sql.append(
+            " LEFT JOIN Insurance ON Insurance_Journal.insurance_id=Insurance.insurance_id ")
+        sql.append(
+            " LEFT JOIN Other_Asset ON Insurance.asset_id=Other_Asset.asset_id ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' ")
+        sql.append(
+            " UNION ALL SELECT stock_id, excute_type, excute_price, excute_date, Other_Asset.asset_id, asset_name FROM Stock_Detail ")
+        sql.append(
+            " LEFT JOIN Stock_Journal ON Stock_Detail.stock_id=Stock_Journal.stock_id ")
+        sql.append(
+            " LEFT JOIN Other_Asset ON Stock_Journal.asset_id=Other_Asset.asset_id ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' ")
+        sql.append(f" ORDER BY asset_id ASC ")
+
+        return db.engine.execute(''.join(sql))
+
     def add(self, other_asset):
         db.session.add(other_asset)
         db.session.flush()

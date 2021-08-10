@@ -36,7 +36,7 @@ def init_estate_asset_api(app):
 
             inputData['obtain_date'] = datetime.strptime(
                 inputData['obtain_date'], date_format)
-            print(inputData)
+
             result = Estate.add(Estate, Estate(inputData))
 
             if result:

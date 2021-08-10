@@ -13,16 +13,20 @@ class StockDetail(db.Model):
     excute_amount = db.Column(db.SmallInteger)
     excute_price = db.Column(db.Float)
     excute_date = db.Column(db.DateTime, nullable=False, index=True)
+    account_id = db.Column(db.Integer, nullable=False)
+    account_name = db.Column(db.String(60), nullable=False)
     memo = db.Column(db.Text)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, stock_id, excute_type, excute_amount, excute_price, excute_date, memo):
-        self.stock_id = stock_id
-        self.excute_type = excute_type
-        self.excute_amount = excute_amount if excute_amount else None
-        self.excute_price = excute_price if excute_price else None
-        self.excute_date = excute_date
-        self.memo = memo if memo else None
+    def __init__(self, StockDetail):
+        self.stock_id = StockDetail['stock_id']
+        self.excute_type = StockDetail['excute_type']
+        self.excute_amount = StockDetail['excute_amount'] if StockDetail['excute_amount'] else None
+        self.excute_price = StockDetail['excute_price'] if StockDetail['excute_price'] else None
+        self.excute_date = StockDetail['excute_date']
+        self.account_id = StockDetail['account_id']
+        self.account_name = StockDetail['account_name']
+        self.memo = StockDetail['memo'] if StockDetail['memo'] else None
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
 
@@ -68,5 +72,7 @@ class StockDetail(db.Model):
             'excute_amount': asset.excute_amount,
             'excute_price': asset.excute_price,
             'excute_date': asset.excute_date,
+            'account_id': asset.account_id,
+            'account_name': asset.account_name,
             'memo': asset.memo
         }

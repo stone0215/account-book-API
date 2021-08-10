@@ -11,13 +11,14 @@ class Journal(db.Model):
     vesting_month = db.Column(db.String(6), nullable=False, index=True)
     spend_date = db.Column(db.DateTime, nullable=False, index=True)
     spend_way = db.Column(db.String(10), nullable=False)
-    spend_way_type = db.Column(db.String(10), nullable=False)
+    spend_way_type = db.Column(db.String(20), nullable=False)
     spend_way_table = db.Column(db.String(15), nullable=False)
     action_main = db.Column(db.String(10), nullable=False)
+    action_main_type = db.Column(db.String(20), nullable=False)
     action_main_table = db.Column(db.String(15), nullable=False)
     action_sub = db.Column(db.String(10), nullable=False)
     action_sub_table = db.Column(db.String(10), nullable=False)
-    spending = db.Column(db.Float)
+    spending = db.Column(db.Float, nullable=False)
     note = db.Column(db.Text)
 
     # 物件建立之後所要建立的初始化動作
@@ -28,6 +29,7 @@ class Journal(db.Model):
         self.spend_way_type = Journal['spend_way_type']
         self.spend_way_table = Journal['spend_way_table']
         self.action_main = Journal['action_main']
+        self.action_main_type = Journal['action_main_type']
         self.action_main_table = Journal['action_main_table']
         self.action_sub = Journal['action_sub']
         self.action_sub_table = Journal['action_sub_table']
@@ -42,7 +44,17 @@ class Journal(db.Model):
         return self.query.filter_by(distinct_number=distinct_number).first()
 
     def queryByVestingMonth(self, vesting_month):
-        return self.query.filter_by(vesting_month=vesting_month).order_by(asc(self.distinct_number)).all()
+        return self.query.filter_by(vesting_month=vesting_month).order_by(asc(self.spend_date)).all()
+
+    def queryForExpenditureRatio(self, vestingMonth, sortColumn):
+        sql = []
+        sql.append("SELECT *, name AS action_main_name FROM Journal ")
+        sql.append(" LEFT JOIN Code_Data ON code_id=action_main ")
+        sql.append(
+            f" WHERE vesting_month = '{vestingMonth}' AND action_main_table='Code' ")
+        sql.append(f" ORDER BY {sortColumn} ASC ")
+
+        return db.engine.execute(''.join(sql))
 
     def queryEstateOrLiabilityRecord(self, vestingMonth):
         sql = []
@@ -88,6 +100,7 @@ class Journal(db.Model):
             'spend_way_type': Journal.spend_way_type,
             'spend_way_table': Journal.spend_way_table,
             'action_main': Journal.action_main,
+            'action_main_type': Journal.action_main_type,
             'action_main_table': Journal.action_main_table,
             'action_sub': Journal.action_sub,
             'action_sub_table': Journal.action_sub_table,

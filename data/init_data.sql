@@ -13,7 +13,7 @@ SELECT 'Floating', '休閒娛樂', NULL, NULL, 'Y', NULL UNION ALL
 SELECT 'Floating', '人情往來', NULL, NULL, 'Y', NULL UNION ALL
 SELECT 'Floating', '捐款', NULL, NULL, 'Y', NULL UNION ALL
 SELECT 'Floating', '其他', NULL, NULL, 'Y', NULL )
-WHERE NOT EXISTS ( SELECT NULL FROM Code_Data );
+WHERE NOT EXISTS ( SELECT NULL FROM Code_Data WHERE code_type='Floating' );
 
 INSERT INTO Code_Data (code_type, name ,code_group, code_group_name, in_use, code_index)
 SELECT * FROM (
@@ -132,7 +132,7 @@ SELECT * FROM (
 SELECT 'Income', '薪資', NULL, NULL, 'Y', NULL UNION ALL
 SELECT 'Income', '獎金', NULL, NULL, 'Y', NULL UNION ALL
 SELECT 'Income', '投資', NULL, NULL, 'Y', NULL )
-WHERE NOT EXISTS ( SELECT NULL FROM Code_Data );
+WHERE NOT EXISTS ( SELECT NULL FROM Code_Data WHERE code_type='Income' );
 
 INSERT INTO Code_Data (code_type, name ,code_group, code_group_name, in_use, code_index)
 SELECT * FROM (
@@ -159,7 +159,7 @@ SELECT 'Fixed', '尊親費用', NULL, NULL, 'Y', NULL UNION ALL
 SELECT 'Fixed', '居家物業', NULL, NULL, 'Y', NULL UNION ALL
 SELECT 'Fixed', '稅費', NULL, NULL, 'Y', NULL UNION ALL
 SELECT 'Fixed', '保險費', NULL, NULL, 'Y', NULL )
-WHERE NOT EXISTS ( SELECT NULL FROM Code_Data );
+WHERE NOT EXISTS ( SELECT NULL FROM Code_Data WHERE code_type='Fixed' );
 
 INSERT INTO Code_Data (code_type, name ,code_group, code_group_name, in_use, code_index)
 SELECT * FROM (
@@ -172,9 +172,9 @@ WHERE NOT EXISTS ( SELECT NULL FROM Code_Data WHERE code_group_name='生活基�
 
 INSERT INTO Code_Data (code_type, name ,code_group, code_group_name, in_use, code_index)
 SELECT * FROM (
-SELECT 'Fixed','生活費', ( SELECT code_id FROM Code_Data WHERE name='尊親費用' ), '尊親費用', 'Y', NULL UNION ALL
-SELECT 'Fixed','保險費', ( SELECT code_id FROM Code_Data WHERE name='尊親費用' ), '尊親費用', 'Y', NULL )
-WHERE NOT EXISTS ( SELECT NULL FROM Code_Data WHERE code_group_name='尊親費用' );
+SELECT 'Fixed','生活費', ( SELECT code_id FROM Code_Data WHERE name='尊親費用' AND code_type='Fixed' ), '尊親費用', 'Y', NULL UNION ALL
+SELECT 'Fixed','保險費', ( SELECT code_id FROM Code_Data WHERE name='尊親費用' AND code_type='Fixed' ), '尊親費用', 'Y', NULL )
+WHERE NOT EXISTS ( SELECT NULL FROM Code_Data WHERE code_group_name='尊親費用' AND code_type='Fixed' );
 
 INSERT INTO Code_Data (code_type, name ,code_group, code_group_name, in_use, code_index)
 SELECT * FROM (
@@ -204,7 +204,7 @@ INSERT INTO Code_Data (code_type, name ,code_group, code_group_name, in_use, cod
 SELECT * FROM (
 SELECT 'Passive', '孳息收入', NULL, NULL, 'Y', NULL UNION ALL
 SELECT 'Passive', '借貸收入', NULL, NULL, 'Y', NULL )
-WHERE NOT EXISTS ( SELECT NULL FROM Code_Data );
+WHERE NOT EXISTS ( SELECT NULL FROM Code_Data WHERE code_type='Passive' );
 
 INSERT INTO Code_Data (code_type, name ,code_group, code_group_name, in_use, code_index)
 SELECT * FROM (
@@ -221,5 +221,20 @@ WHERE NOT EXISTS ( SELECT NULL FROM Code_Data WHERE code_group_name='借貸收�
 -- 帳戶
 INSERT INTO Account (account_id, name ,account_type, fx_code, is_calculate, in_use, discount, memo, account_index)
 SELECT * FROM (
-SELECT '807-123456789', '永豐實體', 'normal', 'TWD', 'Y', 'Y', NULL, NULL, NULL )
-WHERE NOT EXISTS ( SELECT NULL FROM Code_Data );
+SELECT NULL, '自己手邊', 'cash', 'TWD', 'N', 'Y', NULL, NULL, NULL UNION ALL
+SELECT '807-1234567890', '永豐大戶', 'normal', 'TWD', 'Y', 'Y', NULL, '活存50萬內1.1%及免費跨行轉提20次，至2021年12月31日', NULL )
+WHERE NOT EXISTS ( SELECT NULL FROM Account );
+
+INSERT INTO Account_Balance (vesting_month, id, name ,balance, fx_rate)
+SELECT * FROM (
+SELECT '202012', ( SELECT id FROM Account WHERE name='永豐大戶' ), '永豐大戶', 123456, 1 )
+WHERE NOT EXISTS ( SELECT NULL FROM Account_Balance );
+
+-- 其他資產
+INSERT INTO Other_Asset (asset_name, asset_type, in_use ,asset_index)
+SELECT * FROM (
+SELECT '台股', 'Stock', 'Y', NULL UNION ALL 
+SELECT '美股', 'Stock', 'Y', NULL UNION ALL 
+SELECT '儲蓄險', 'Insurance', 'Y', NULL  UNION ALL 
+SELECT '房地產', 'Estate', 'Y', NULL  )
+WHERE NOT EXISTS ( SELECT NULL FROM Other_Asset );
