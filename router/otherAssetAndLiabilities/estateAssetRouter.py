@@ -63,7 +63,7 @@ def init_estate_asset_api(app):
                 estate_asset.estate_address = inputData['estate_address']
                 estate_asset.obtain_date = datetime.strptime(
                     inputData['obtain_date'], date_format)
-                estate_asset.down_payment = inputData['down_payment']
+                # estate_asset.down_payment = inputData['down_payment']
                 estate_asset.loan_id = inputData['loan_id'] if inputData['loan_id'] else None
                 estate_asset.estate_status = inputData['estate_status']
                 estate_asset.memo = inputData['memo']

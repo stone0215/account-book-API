@@ -56,18 +56,18 @@ class Account(db.Model):
     def query4Selection(self):
         return self.query.with_entities(self.id, self.name, self.account_type, self.account_index).filter_by(in_use='Y')
 
-    def query4Summary(self, vestingMonth):
+    def query4Summary(self, lastMonth, vestingMonth):
         sql = []
         sql.append(
             "SELECT '' AS vesting_month, Account.id, Account.name, IFNULL(balance,0) AS balance, IFNULL(buy_rate,1) AS fx_rate FROM Account ")
         sql.append(
-            f" LEFT JOIN Account_Balance Balance ON Balance.vesting_month = '{vestingMonth}' ")
+            f" LEFT JOIN Account_Balance Balance ON Balance.vesting_month = '{lastMonth}' AND Balance.id=Account.id ")
         sql.append(
             " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
         sql.append(
             f" WHERE STRFTIME('%Y%m', import_date) = '{vestingMonth}' GROUP BY code) Rate ON Rate.code = Account.fx_code ")
 
-        sql.append(" ORDER BY id ASC")
+        sql.append(" ORDER BY Account.id ASC")
 
         return db.engine.execute(''.join(sql))
 

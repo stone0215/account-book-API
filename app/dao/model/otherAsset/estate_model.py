@@ -16,7 +16,7 @@ class Estate(db.Model):
     estate_address = db.Column(db.Text, nullable=False)
     asset_id = db.Column(db.Integer, nullable=False)
     obtain_date = db.Column(db.DateTime, nullable=False, index=True)
-    down_payment = db.Column(db.Float, nullable=False)
+    # down_payment = db.Column(db.Float, nullable=False)
     loan_id = db.Column(db.Integer)
     estate_status = db.Column(db.String(10), nullable=False)
     memo = db.Column(db.Text)
@@ -28,7 +28,7 @@ class Estate(db.Model):
         self.estate_address = Estate['estate_address']
         self.asset_id = Estate['asset_id']
         self.obtain_date = Estate['obtain_date']
-        self.down_payment = Estate['down_payment']
+        # self.down_payment = Estate['down_payment']
         self.loan_id = Estate['loan_id'] if Estate['loan_id'] else None
         self.estate_status = Estate['estate_status']
         self.memo = Estate['memo'] if Estate['memo'] else None
@@ -43,7 +43,7 @@ class Estate(db.Model):
     def query4Display(self, asset_id):
         sql = []
         sql.append(
-            "SELECT estate_main.estate_id, estate_name, estate_type, estate_address, asset_id, obtain_date, down_payment, estate_main.loan_id, loan_name, ")
+            "SELECT estate_main.estate_id, estate_name, estate_type, estate_address, asset_id, obtain_date, estate_main.loan_id, loan_name, ")
         sql.append(
             "estate_status, memo, Estate_Amount.cost, Estate_Profit.profit ")
         sql.append("FROM Estate estate_main ")
@@ -74,9 +74,9 @@ class Estate(db.Model):
         sql.append(
             " LEFT JOIN (SELECT estate_id, SUM(excute_price) AS cost FROM Estate_Journal ")
         sql.append(
-            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}') Journal ON Journal.estate_id = Estate.estate_id ")
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' GROUP BY estate_id) Journal ON Journal.estate_id = Estate.estate_id ")
 
-        sql.append(" ORDER BY Estate.estate_id ASC")
+        sql.append(" WHERE estate_status != 'sold' ORDER BY Estate.estate_id ASC")
 
         return db.engine.execute(''.join(sql))
 
@@ -110,7 +110,7 @@ class Estate(db.Model):
             'estate_address': estate.estate_address,
             'asset_id': estate.asset_id,
             'obtain_date': datetime.strptime(estate.obtain_date, '%Y-%m-%d %H:%M:%S.%f'),
-            'down_payment': estate.down_payment,
+            # 'down_payment': estate.down_payment,
             'loan_id': estate.loan_id,
             'loan_name': estate.loan_name,
             'cost': estate.cost,

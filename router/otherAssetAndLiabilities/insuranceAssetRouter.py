@@ -69,6 +69,7 @@ def init_insurance_asset_api(app):
                 insurance_asset.in_account_name = inputData['in_account_name']
                 insurance_asset.out_account_id = inputData['out_account_id']
                 insurance_asset.out_account_name = inputData['out_account_name']
+                insurance_asset.has_closed = inputData['has_closed']
                 # insurance_asset.expected_spend = inputData['expected_spend'] if inputData['expected_spend'] else None
                 if Insurance.update(Insurance):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))

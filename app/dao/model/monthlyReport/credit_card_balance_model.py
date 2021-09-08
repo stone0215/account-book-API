@@ -28,6 +28,44 @@ class CreditCardBalance(db.Model):
     def queryByVestingMonth(self, vesting_month):
         return self.query.filter_by(vesting_month=vesting_month).all()
 
+    def queryForLiabilities(self, vestingMonth):
+        lastMonth = int(vestingMonth) - \
+            1 if (int(vestingMonth) -
+                  1) % 100 != 0 else (int(vestingMonth[:4])-1)*100+12
+
+        sql = []
+        sql.append(
+            "SELECT '信用卡' AS type, card_name AS name, spending, payment AS payment, (IFNULL(balance,0)+IFNULL(spending,0)-IFNULL(payment,0)) AS balance FROM Credit_Card ")
+        sql.append(
+            f"LEFT JOIN (SELECT id, balance FROM Credit_Card_Balance WHERE vesting_month='{lastMonth}') AS Balance ON Balance.id=credit_card_id ")
+        sql.append(
+            "LEFT JOIN (SELECT spend_way, spend_way_table, SUM(spending) AS spending FROM Journal ")
+        sql.append(
+            f"WHERE vesting_month = '{vestingMonth}' AND spend_way_table='Credit_Card' GROUP BY spend_way, spend_way_table) AS Journal_Spending ON credit_card_id=Journal_Spending.spend_way ")
+        sql.append(
+            "LEFT JOIN (SELECT action_sub, action_sub_table, SUM(spending) AS payment FROM Journal ")
+        sql.append(
+            f"WHERE vesting_month = '{vestingMonth}' AND action_sub_table='Credit_Card' GROUP BY action_sub, action_sub_table) AS Journal_Payment ON credit_card_id=Journal_Payment.action_sub ")
+        sql.append(
+            "WHERE in_use='Y' AND (IFNULL(balance,0) != 0 OR IFNULL(spending,0) != 0 OR IFNULL(payment,0) != 0) ")
+        sql.append(
+            "UNION ALL SELECT '貸款' AS type, loan_name AS name, spending, payment, IFNULL(balance,0)+IFNULL(spending,0)+IFNULL(payment,0) AS balance FROM Loan ")
+        sql.append(
+            f"LEFT JOIN (SELECT id, balance FROM Loan_Balance WHERE vesting_month='{lastMonth}') AS Balance ON Balance.id=Loan.loan_id ")
+        sql.append(
+            "LEFT JOIN (SELECT loan_id, SUM(excute_price) AS spending FROM Loan_Journal ")
+        sql.append(
+            f"WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND loan_excute_type='increment' GROUP BY loan_id) AS Journal_Spending ON Loan.loan_id=Journal_Spending.loan_id ")
+        sql.append(
+            "LEFT JOIN (SELECT loan_id, SUM(excute_price) AS payment FROM Loan_Journal ")
+        sql.append(
+            f"WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND loan_excute_type='principal' GROUP BY loan_id) AS Journal_Payment ON Loan.loan_id=Journal_Payment.loan_id ")
+        sql.append(
+            "WHERE repayed='N' ")
+        sql.append(" ORDER BY type ASC ")
+
+        return db.engine.execute(''.join(sql))
+
     def bulkInsert(self, datas):
         sql = 'INSERT INTO Credit_Card_Balance(vesting_month, id, name, balance, fx_rate) VALUES(:1, :2, :3, :4, :5)'
 
@@ -43,7 +81,7 @@ class CreditCardBalance(db.Model):
             return False
 
     def delete(self, vesting_month):
-        self.query.filter(vesting_month >= vesting_month).delete()
+        self.query.filter(self.vesting_month >= vesting_month).delete()
 
         if DaoBase.session_commit(self) == '':
             return True
@@ -57,4 +95,13 @@ class CreditCardBalance(db.Model):
             'id': asset.id,
             'name': asset.name,
             'asset_id': asset.asset_id
+        }
+
+    def outputForLiability(self, liability):
+        return {
+            'type': liability.type,
+            'name': liability.name,
+            'spending':  abs(liability.spending) if liability.spending else None,
+            'payment':  abs(liability.payment) if liability.payment else None,
+            'balance':  abs(liability.balance)
         }

@@ -68,12 +68,13 @@ def init_util_api(app):
         try:
             # 取得貸款選項
             tempSelections = Loan.query4Selection(Loan)
-            for loan in tempSelections:
-                selections.append(Loan.output4Selection(Loan, loan))
-            output.append({
-                'title': '貸款',
-                'selections': selections
-            })
+            if tempSelections.count() > 0:
+                for loan in tempSelections:
+                    selections.append(Loan.output4Selection(Loan, loan))
+                output.append({
+                    'title': '貸款',
+                    'selections': selections
+                })
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:

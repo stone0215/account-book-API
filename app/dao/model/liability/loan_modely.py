@@ -76,9 +76,31 @@ class Loan(db.Model):
     def query4Summary(self, vestingMonth):
         sql = []
         sql.append(
-            "SELECT '' AS vesting_month, loan_id AS id, loan_name AS name, IFNULL(balance,0) AS balance FROM Loan ")
+            "SELECT '' AS vesting_month, Loan.loan_id AS id, loan_name AS name, amount+IFNULL(payed,0) AS balance, IFNULL(cost,0) AS cost FROM Loan ")
         sql.append(
-            f" LEFT JOIN Loan_Balance Balance ON Balance.vesting_month = '{vestingMonth}' ")
+            f" LEFT JOIN (SELECT loan_id, SUM(excute_price) AS payed FROM Loan_Journal WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' ")
+        sql.append(
+            " AND (loan_excute_type='principal' OR loan_excute_type='increment') GROUP BY loan_id) Journal_Payed ")
+        sql.append(" ON Journal_Payed.loan_id=Loan.loan_id ")
+        sql.append(
+            f" LEFT JOIN (SELECT loan_id, SUM(excute_price) AS cost FROM Loan_Journal WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' ")
+        sql.append(
+            " AND (loan_excute_type='interest' OR loan_excute_type='fee') GROUP BY loan_id) Journal_Cost ")
+        sql.append(" ON Journal_Cost.loan_id=Loan.loan_id ")
+        sql.append(" WHERE repayed='N' ORDER BY Loan.loan_id ASC")
+
+        return db.engine.execute(''.join(sql))
+
+    def query4CashFlow(self, vestingMonth):
+        lastMonth = int(vestingMonth) - \
+            1 if int(vestingMonth) - \
+            1 % 100 != 0 else (int(vestingMonth[:4])-1)*100+12
+
+        sql = []
+        sql.append(
+            "SELECT '貸款' AS type, loan_name AS name, IFNULL(balance,amount) AS balance FROM Loan ")
+        sql.append(
+            f" LEFT JOIN Loan_Balance Balance ON Balance.vesting_month = '{lastMonth}' ")
 
         sql.append(" ORDER BY loan_id ASC")
 

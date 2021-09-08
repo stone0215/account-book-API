@@ -57,7 +57,7 @@ class Code(db.Model):
         return self.query.with_entities(self.code_id, self.name, self.code_type, self.code_index).filter_by(in_use='Y', code_group=None)
 
     def query4SubSelection(self, parent_id):
-        return self.query.with_entities(self.code_id, self.name, self.code_index).filter_by(code_group=parent_id, in_use='Y').order_by(asc(self.code_index)).all()
+        return self.query.with_entities(self.code_id, self.name, self.code_type, self.code_index).filter_by(code_group=parent_id, in_use='Y').order_by(asc(self.code_index)).all()
 
     def add(self, code):
         db.session.add(code)
@@ -113,5 +113,6 @@ class Code(db.Model):
             'key': Code.code_id,
             'value': Code.name,
             'index': Code.code_index,
+            'type': Code.code_type,
             'table': 'Code'  # 為了區分每個 id 隸屬於哪個 table，因為下拉選單id可能重複
         }

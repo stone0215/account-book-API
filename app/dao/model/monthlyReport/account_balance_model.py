@@ -43,7 +43,7 @@ class AccountBalance(db.Model):
             return False
 
     def delete(self, vesting_month):
-        self.query.filter(vesting_month >= vesting_month).delete()
+        self.query.filter(self.vesting_month >= vesting_month).delete()
 
         if DaoBase.session_commit(self) == '':
             return True

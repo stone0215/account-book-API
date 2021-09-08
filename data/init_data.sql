@@ -173,7 +173,8 @@ WHERE NOT EXISTS ( SELECT NULL FROM Code_Data WHERE code_group_name='生活基�
 INSERT INTO Code_Data (code_type, name ,code_group, code_group_name, in_use, code_index)
 SELECT * FROM (
 SELECT 'Fixed','生活費', ( SELECT code_id FROM Code_Data WHERE name='尊親費用' AND code_type='Fixed' ), '尊親費用', 'Y', NULL UNION ALL
-SELECT 'Fixed','保險費', ( SELECT code_id FROM Code_Data WHERE name='尊親費用' AND code_type='Fixed' ), '尊親費用', 'Y', NULL )
+SELECT 'Fixed','保險費', ( SELECT code_id FROM Code_Data WHERE name='尊親費用' AND code_type='Fixed' ), '尊親費用', 'Y', NULL UNION ALL
+SELECT 'Fixed','基本支出', ( SELECT code_id FROM Code_Data WHERE name='尊親費用' AND code_type='Fixed' ), '尊親費用', 'Y', NULL )
 WHERE NOT EXISTS ( SELECT NULL FROM Code_Data WHERE code_group_name='尊親費用' AND code_type='Fixed' );
 
 INSERT INTO Code_Data (code_type, name ,code_group, code_group_name, in_use, code_index)
@@ -238,3 +239,25 @@ SELECT '美股', 'Stock', 'Y', NULL UNION ALL
 SELECT '儲蓄險', 'Insurance', 'Y', NULL  UNION ALL 
 SELECT '房地產', 'Estate', 'Y', NULL  )
 WHERE NOT EXISTS ( SELECT NULL FROM Other_Asset );
+
+-- 預算
+INSERT INTO Budget (budget_year, category_code, category_name ,code_type, expected01, expected02, expected03, expected04, expected05, expected06, expected07, expected08, expected09, expected10, expected11, expected12)
+SELECT * FROM (
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='主食' ), '主食', 'Floating', -4377, -5092, -5097, -4224, -4688, -6399, -4071, -4996, -4606, -4752, -4826, -7677 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='副食' ), '副食', 'Floating', -636, -669, -665, -826, -160, -219, -194, -1067, -586, -2310, -1625, -3341 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='日用品' ), '日用品', 'Floating', -94, 0, -245, -265, -1599, -1369, -526, 0, -5950, -1883, -8500, -856 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='行車交通' ), '行車交通', 'Floating', -670, -738, -933, -711, -1229, -881, -842, -1038, -1057, -1116, -952, -855 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='學習' ), '學習', 'Floating', -1914, -319, -606, -199, -199, -199, 0, -750, -6413, 0, 0, -3500 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='醫療費' ), '醫療費', 'Floating', -270, -240, -320, 0, -100, -2620, -3150, -6050, -7350, -370, 0, 0 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='毛小孩' ), '毛小孩', 'Floating', -270, -240, -320, 0, -100, -2620, -3150, -6050, -7350, -370, 0, 0 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='尊親費用' AND code_type='Floating' ), '尊親費用', 'Floating', -286, -17556, 0, -3104, -1645, -3660, -1598, -4266, -678, -5647, -704, -371 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='休閒娛樂' ), '休閒娛樂', 'Floating', 0, 0, 0, 0, -4288, -1248, -5223, 0, 0, 0, -576, 0 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='人情往來' ), '人情往來', 'Floating', 0, -24400, 0, 0, -4200, 0, 0, 0, 0, 0, -3400, -0 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='捐款' ), '捐款', 'Floating', -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='其他' ), '其他', 'Floating', 0, -1228, -800, -0, -800, -800, -89, 0, -3766, -615, -4867, -1202 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='生活基本' ), '生活基本', 'Fixed', -3000, -3000, -3000, -3000, -3000, -3000, -3000, -3000, -3000, -3000, -3000, -3000 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='尊親費用' AND code_type='Fixed' ), '尊親費用', 'Fixed', -12000, -12000, -12000, -12000, -72197, -12000, -12000, -12000, -12000, -12000, -12000, -12000 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='居家物業' ), '居家物業', 'Fixed', -15000, -15000, -15000, -15000, -15000, -15000, -15000, -15000, -15000, -15000, -15000, -15000 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='稅費' ), '稅費', 'Fixed', 0, 0, 0, 0, -10000, -10000, -1000, 0, 0, 0, 0, 0 UNION ALL 
+SELECT '2021', ( SELECT code_id FROM Code_Data WHERE name='保險費' ), '保險費', 'Fixed', -16081, -8375, 0, 0, 0, -20184, 0, -1200, 0, 0, 0, 0 )
+WHERE NOT EXISTS ( SELECT NULL FROM Budget );

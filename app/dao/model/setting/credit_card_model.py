@@ -7,26 +7,28 @@ class CreditCard(db.Model):
     __tablename__ = 'Credit_Card'
     credit_card_id = db.Column(db.Integer, primary_key=True)
     card_name = db.Column(db.String(60), nullable=False, index=True)
+    card_no = db.Column(db.String(19), nullable=False)
     last_day = db.Column(db.String(2), nullable=False)
     charge_day = db.Column(db.String(2), nullable=False)
-    limit_date = db.Column(db.DateTime, nullable=False)
-    feedback_way = db.Column(db.String(1), nullable=False)
+    limit_date = db.Column(db.String(7), nullable=False)
+    feedback_way = db.Column(db.String(5), nullable=False)
     fx_code = db.Column(db.String(3), nullable=False)
     in_use = db.Column(db.String(1), nullable=False, index=True)
     credit_card_index = db.Column(db.SmallInteger)
     note = db.Column(db.Text)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, card_name, last_day, charge_day, limit_date, feedback_way, fx_code, in_use, note, credit_card_index):
-        self.card_name = card_name
-        self.last_day = last_day
-        self.charge_day = charge_day
-        self.limit_date = limit_date
-        self.feedback_way = feedback_way  # C：現金/ P：紅利/ N：無
-        self.fx_code = fx_code
-        self.in_use = in_use  # Y/M
-        self.credit_card_index = credit_card_index or ''
-        self.note = note
+    def __init__(self, CreditCard):
+        self.card_name = CreditCard["card_name"]
+        self.card_no = CreditCard["card_no"]
+        self.last_day = CreditCard["last_day"]
+        self.charge_day = CreditCard["charge_day"]
+        self.limit_date = CreditCard["limit_date"]
+        self.feedback_way = CreditCard["feedback_way"]  # C：現金/ P：紅利/ N：無
+        self.fx_code = CreditCard["fx_code"]
+        self.in_use = CreditCard["in_use"]  # Y/M
+        self.credit_card_index = CreditCard["credit_card_index"] or ''
+        self.note = CreditCard["note"]
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -57,12 +59,12 @@ class CreditCard(db.Model):
     def query4Selection(self):
         return self.query.with_entities(self.credit_card_id, self.card_name, self.credit_card_index).filter_by(in_use='Y')
 
-    def query4Summary(self, vestingMonth):
+    def query4Summary(self, lastMonth, vestingMonth):
         sql = []
         sql.append(
             "SELECT '' AS vesting_month, credit_card_id AS id, card_name AS name, IFNULL(balance,0) AS balance, IFNULL(buy_rate,1) AS fx_rate FROM Credit_Card ")
         sql.append(
-            f" LEFT JOIN Credit_Card_Balance Balance ON Balance.vesting_month = '{vestingMonth}' ")
+            f" LEFT JOIN Credit_Card_Balance Balance ON Balance.vesting_month = '{lastMonth}' AND Balance.id=Credit_Card.credit_card_id ")
         sql.append(
             " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
         sql.append(
@@ -76,7 +78,10 @@ class CreditCard(db.Model):
         db.session.add(credit_card)
         db.session.flush()
 
-        return credit_card
+        if DaoBase.session_commit(self) == '':
+            return credit_card
+        else:
+            return False
 
     def update(self):
         if DaoBase.session_commit(self) == '':
@@ -95,6 +100,7 @@ class CreditCard(db.Model):
         return {
             'credit_card_id': credit_card.credit_card_id,
             'card_name': credit_card.card_name,
+            'card_no': credit_card.card_no,
             'last_day': credit_card.last_day,
             'charge_day': credit_card.charge_day,
             'limit_date': credit_card.limit_date,

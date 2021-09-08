@@ -11,6 +11,7 @@ class LoanBalance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60), nullable=False)
     balance = db.Column(db.Float, nullable=False)
+    cost = db.Column(db.Float, nullable=False)
 
     # 物件建立之後所要建立的初始化動作
     def __init__(self, LoanBalance):
@@ -18,6 +19,7 @@ class LoanBalance(db.Model):
         self.id = LoanBalance.id
         self.name = LoanBalance.name
         self.balance = LoanBalance.balance
+        self.cost = LoanBalance.cost
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):

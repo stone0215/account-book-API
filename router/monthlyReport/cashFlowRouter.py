@@ -15,9 +15,9 @@ from app.dao.model.monthlyReport.loan_balance_model import LoanBalance
 from app.dao.model.monthlyReport.stock_net_value_model import StockNetValueHistory
 from app.dao.model.otherAsset.estate_model import Estate
 from app.dao.model.otherAsset.insurance_model import Insurance
-from app.dao.model.otherAsset.other_asset_model import OtherAsset
 from app.dao.model.otherAsset.stock_journal_model import StockJournal
 from app.dao.model.setting.account_model import Account
+from app.dao.model.setting.budget_model import Budget
 from app.dao.model.setting.credit_card_model import CreditCard
 
 date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -104,17 +104,12 @@ def init_journal_api(app):
     @app.route('/balance/<string:vestingMonth>', methods=['PUT'])
     def setMonthlySummary(vestingMonth):
         try:
-
-            lastMonth = int(vestingMonth) - \
-                1 if int(vestingMonth) - \
-                1 % 10 != 0 else (int(vestingMonth[:4])-1)*100+12
-
             # 其他資產若是沒有本月份資料才塞，因為不會漏掉補帳
             estateOrLiabilityRecords = Journal.queryEstateOrLiabilityRecord(
                 Journal, vestingMonth)
             for record in estateOrLiabilityRecords:
                 if record.name == 'Estate' and record.has_record == 0:
-                    estates = Estate.query4Summary(Estate, str(lastMonth))
+                    estates = Estate.query4Summary(Estate, vestingMonth)
                     for estate in estates:
                         obj = EstateNetValueHistory(estate)
                         obj.vesting_month = vestingMonth
@@ -122,34 +117,39 @@ def init_journal_api(app):
                             EstateNetValueHistory, obj)
                 elif record.name == 'Insurance' and record.has_record == 0:
                     insurances = Insurance.query4Summary(
-                        Insurance, str(lastMonth))
+                        Insurance, vestingMonth)
                     for insurance in insurances:
                         obj = InsuranceNetValueHistory(insurance)
                         obj.vesting_month = vestingMonth
                         InsuranceNetValueHistory.add(
                             InsuranceNetValueHistory, obj)
                 elif record.name == 'Loan' and record.has_record == 0:
-                    loans = Loan.query4Summary(Loan, str(lastMonth))
+                    loans = Loan.query4Summary(Loan, vestingMonth)
                     for loan in loans:
                         obj = LoanBalance(loan)
                         obj.vesting_month = vestingMonth
                         LoanBalance.add(LoanBalance, obj)
                 elif record.name == 'Stock' and record.has_record == 0:
                     stocks = StockJournal.query4Summary(
-                        StockJournal, str(lastMonth))
+                        StockJournal, vestingMonth)
                     for stock in stocks:
                         obj = StockNetValueHistory(stock)
-                        obj.vesting_month = vestingMonth
-                        StockNetValueHistory.add(StockNetValueHistory, obj)
+                        if obj.amount != 0:
+                            obj.vesting_month = vestingMonth
+                            StockNetValueHistory.add(StockNetValueHistory, obj)
 
+            lastMonth = int(vestingMonth) - \
+                1 if (int(vestingMonth) -
+                      1) % 100 != 0 else (int(vestingMonth[:4])-1)*100+12
             # 先清掉含本月份之後的資料
             AccountBalance.delete(AccountBalance, vestingMonth)
             CreditCardBalance.delete(CreditCardBalance, vestingMonth)
             journals = Journal.queryByVestingMonth(Journal, vestingMonth)
             journals.sort(key=lambda item: (
                 item.spend_way_table, item.spend_way))
-            accounts = Account.query4Summary(Account, str(lastMonth))
-            cards = CreditCard.query4Summary(CreditCard, str(lastMonth))
+            accounts = Account.query4Summary(Account, lastMonth, vestingMonth)
+            cards = CreditCard.query4Summary(
+                CreditCard, lastMonth, vestingMonth)
 
             accountArray = []
             for account in accounts:
@@ -159,9 +159,16 @@ def init_journal_api(app):
                     # 處理扣項金額
                     if journal.spend_way_table == 'Account' and obj.id == int(journal.spend_way):
                         obj.balance += journal.spending
+
                     # 處理加項金額
-                    elif journal.action_sub_table == 'Account' and obj.id == int(journal.action_sub):
-                        obj.balance -= journal.spending
+                    if journal.action_sub_table == 'Account' and obj.id == int(journal.action_sub):
+                        if journal.spend_way_type == 'normal' and journal.action_sub_type == 'finance':
+                            obj.balance -= round(journal.spending /
+                                                 int(journal.note), 2)
+                        elif journal.spend_way_type == 'finance' and journal.action_sub_type == 'normal':
+                            obj.balance -= journal.spending*int(journal.note)
+                        else:
+                            obj.balance -= journal.spending
 
                 accountArray.append(obj)
 
@@ -179,8 +186,15 @@ def init_journal_api(app):
 
                 cardArray.append(obj)
 
-            result = AccountBalance.bulkInsert(
-                AccountBalance, accountArray) and CreditCardBalance.bulkInsert(CreditCardBalance, cardArray)
+            result = False
+
+            if (len(accountArray) > 0):
+                result = AccountBalance.bulkInsert(
+                    AccountBalance, accountArray)
+
+            if (len(cardArray) > 0):
+                result = CreditCardBalance.bulkInsert(
+                    CreditCardBalance, cardArray)
 
             if result:
                 return jsonify(ResponseFormat.true_return(ResponseFormat, None, 'Success'))
@@ -196,30 +210,78 @@ def init_journal_api(app):
             journals = Journal.queryForExpenditureRatio(
                 Journal, vestingMonth, 'action_main_type')
 
-            innerPie = []
+            expendingInnerPie = []
             for key, groups in groupby(journals, lambda item: item.action_main_type):
                 spendings = [item.spending for item in list(groups)]
-                innerPie.append(
+                expendingInnerPie.append(
                     {'name': key, 'value': abs(sum(spendings))})  # 取絕對值計算百分比
 
             # 不確定是因為 groupby 後 journals 被清空還是什麼原因導致資料表被釋放，所以需要重撈，之後可以考慮改 panda
             journals = Journal.queryForExpenditureRatio(
                 Journal, vestingMonth, 'action_main')
-            outerPie = []
+            expendingOuterPie = []
             for key, groups in groupby(journals, lambda item: (item.action_main, item.action_main_name, item.action_main_type)):
                 spendings = [item.spending for item in list(groups)]
-                outerPie.append({'name': key[1],
-                                 'type': key[2],
-                                 'value': sum(spendings)})
-
-            # assets = OtherAsset.queryForInvestRatio(OtherAsset, vestingMonth)
-            # innerPie = []
-            # for key, groups in groupby(journals, lambda item: item.action_main_type):
-            #     spendings = [item.spending for item in list(groups)]
-            #     innerPie.append(
-            #         {'name': key, 'value': abs(sum(spendings))})  # 取絕對值計算百分比
+                expendingOuterPie.append({'name': key[1],
+                                          'type': key[2],
+                                          'value': sum(spendings)})
 
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
-            return jsonify(ResponseFormat.true_return(ResponseFormat, {'innerPie': innerPie, 'outerPie': outerPie}))
+            return jsonify(ResponseFormat.true_return(ResponseFormat, {'expendingInnerPie': expendingInnerPie, 'expendingOuterPie': expendingOuterPie}))
+
+    @app.route('/journal/invest-ratio/<string:vestingMonth>', methods=['GET'])
+    def getInvestRatioByVestingMonth(vestingMonth):
+
+        try:
+            # assets = Journal.queryForInvestRatio(
+            #     Journal, vestingMonth, 'action')
+            # assetInnerPie = []
+            # for key, groups in groupby(assets, lambda item: item.action):
+            #     spendings = [item.spending for item in list(groups)]
+            #     assetInnerPie.append(
+            #         {'name': key, 'value': abs(sum(spendings))})  # 取絕對值計算百分比
+
+            # 不確定是因為 groupby 後 assets 被清空還是什麼原因導致資料表被釋放，所以需要重撈，之後可以考慮改 panda
+            assets = Journal.queryForInvestRatio(
+                Journal, vestingMonth)
+            assetOuterPie = []
+            for key, groups in groupby(assets, lambda item: (item.action, item.target)):
+                spendings = [item.spending for item in list(groups)]
+                assetOuterPie.append({'name': key[1],
+                                      'type': key[0],
+                                      'value': sum(spendings)})
+
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, assetOuterPie))
+
+    @app.route('/journal/expenditure-budget/<string:vestingMonth>', methods=['GET'])
+    def getExpenditureBudgetByVestingMonth(vestingMonth):
+        output = []
+
+        try:
+            budgets = Budget.queryForExpenditureBudget(Budget, vestingMonth)
+            for budget in budgets:
+                output.append(Budget.outputForBudget(Budget, budget))
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, output))
+
+    @app.route('/journal/liability/<string:vestingMonth>', methods=['GET'])
+    def getLiabilityByVestingMonth(vestingMonth):
+        output = []
+
+        try:
+            liabilities = CreditCardBalance.queryForLiabilities(
+                CreditCardBalance, vestingMonth)
+            for liability in liabilities:
+                output.append(CreditCardBalance.outputForLiability(
+                    CreditCardBalance, liability))
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, output))

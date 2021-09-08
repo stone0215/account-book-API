@@ -92,13 +92,13 @@ class StockJournal(db.Model):
         sql.append(
             "SELECT '' AS vesting_month, Journal.stock_id AS id, Journal.stock_code, stock_name, Journal.asset_id, ")
         sql.append(
-            " IFNULL(amount,0) AS amount, close_price AS price, IFNULL(cost,0) AS cost, IFNULL(buy_rate,1) AS fx_rate FROM Stock_Journal Journal ")
+            " IFNULL(amount,0) AS amount, IFNULL(close_price,0)*IFNULL(amount,0) AS price, IFNULL(cost,0) AS cost, IFNULL(buy_rate,1) AS fx_rate FROM Stock_Journal Journal ")
         sql.append(
-            " LEFT JOIN (SELECT stock_id, MAX(account_id), SUM(excute_amount) AS amount, SUM(excute_price) AS cost FROM Stock_Detail ")
+            " LEFT JOIN (SELECT stock_id, MAX(account_id) AS account_id, SUM(excute_amount) AS amount, SUM(excute_price) AS cost FROM Stock_Detail ")
         sql.append(
-            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}') Detail ON Detail.stock_id = Journal.stock_id ")
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' GROUP BY stock_id) Detail ON Detail.stock_id = Journal.stock_id ")
         sql.append(
-            " LEFT JOIN (SELECT account_id, fx_code FROM Account) Account ON Account.account_id=Stock_Detail.account_id ")
+            " LEFT JOIN (SELECT id, fx_code FROM Account) Account ON Account.id=Detail.account_id ")
         sql.append(
             " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
         sql.append(

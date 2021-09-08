@@ -37,15 +37,15 @@ CREATE TABLE IF NOT EXISTS Budget (
 	category_code VARCHAR(10), --對應 Code_Data.code_id
 	category_name NVARCHAR(60) NOT NULL, -- 對應 Code_Data.name
 	code_type VARCHAR(10) NOT NULL, -- 對應 Code_Data.code_type
-    expected1 DECIMAL(9,2) NOT NULL,
-	expected2 DECIMAL(9,2) NOT NULL,
-	expected3 DECIMAL(9,2) NOT NULL,
-	expected4 DECIMAL(9,2) NOT NULL,
-	expected5 DECIMAL(9,2) NOT NULL,
-	expected6 DECIMAL(9,2) NOT NULL,
-	expected7 DECIMAL(9,2) NOT NULL,
-	expected8 DECIMAL(9,2) NOT NULL,
-	expected9 DECIMAL(9,2) NOT NULL,
+    expected01 DECIMAL(9,2) NOT NULL,
+	expected02 DECIMAL(9,2) NOT NULL,
+	expected03 DECIMAL(9,2) NOT NULL,
+	expected04 DECIMAL(9,2) NOT NULL,
+	expected05 DECIMAL(9,2) NOT NULL,
+	expected06 DECIMAL(9,2) NOT NULL,
+	expected07 DECIMAL(9,2) NOT NULL,
+	expected08 DECIMAL(9,2) NOT NULL,
+	expected09 DECIMAL(9,2) NOT NULL,
 	expected10 DECIMAL(9,2) NOT NULL,
 	expected11 DECIMAL(9,2) NOT NULL,
 	expected12 DECIMAL(9,2) NOT NULL,
@@ -67,10 +67,11 @@ CREATE TABLE IF NOT EXISTS Code_Data (
 CREATE TABLE IF NOT EXISTS Credit_Card (
 	credit_card_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	card_name NVARCHAR(60) NOT NULL,
+	card_no NVARCHAR(19) NOT NULL,
 	last_day CHARACTER(2) NOT NULL,
     charge_day CHARACTER(2) NOT NULL,
-	limit_date DATE NOT NULL,
-    feedback_way CHARACTER(1) NOT NULL, --C：現金/ P：紅利/ N：無
+	limit_date NVARCHAR(7) NOT NULL,
+    feedback_way NVARCHAR(5) NOT NULL, --Cash：現金/ Point：紅利/ None：無
 	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
 	in_use CHARACTER(1) NOT NULL,
 	credit_card_index TINYINT,
@@ -96,7 +97,7 @@ CREATE TABLE IF NOT EXISTS Estate (
 	estate_address NVARCHAR(300) NOT NULL,
 	asset_id INTEGER NOT NULL,
 	obtain_date DATE NOT NULL,
-	down_payment DECIMAL(9,2) NOT NULL, -- 初始本金/頭期款
+	-- down_payment DECIMAL(9,2) NOT NULL, -- 初始本金/頭期款
 	loan_id INTEGER, -- 對應 Loan.loan_id
 	-- loan_amount DECIMAL(9,2) NOT NULL,
 	-- pay_day CHAR(5), -- mm/dd
@@ -111,7 +112,7 @@ CREATE TABLE IF NOT EXISTS Estate_Journal (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	estate_id INTEGER NOT NULL,
 	-- estate_excute_name NVARCHAR(60) NOT NULL,
-	estate_excute_type VARCHAR(10) NOT NULL, -- tax:稅費 / fee:雜費 / insurance:保險 / fix:修繕 / rent:租金 / deposit:押金
+	estate_excute_type VARCHAR(20) NOT NULL, -- tax:稅費 / fee:雜費 / insurance:保險 / fix:修繕 / rent:租金 / deposit:押金
 	excute_price DECIMAL(9,2) NOT NULL,
 	excute_date DATE NOT NULL,
 	memo NVARCHAR(300)
@@ -172,7 +173,7 @@ CREATE TABLE IF NOT EXISTS Insurance (
 CREATE TABLE IF NOT EXISTS Insurance_Journal (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	insurance_id INTEGER NOT NULL,
-	insurance_excute_type VARCHAR(10) NOT NULL, -- pay:扣款/ cash:配息/ return:贖回/ expect:預期價值
+	insurance_excute_type VARCHAR(20) NOT NULL, -- pay:扣款/ cash:配息/ return:贖回/ expect:預期價值
 	excute_price DECIMAL(7,3) NOT NULL,
 	excute_date DATE NOT NULL,
 	memo NVARCHAR(300)
@@ -186,7 +187,7 @@ CREATE TABLE IF NOT EXISTS Insurance_Net_Value_History (
 	id INTEGER, -- Insurance.insurance_id
 	name NVARCHAR(60) NOT NULL,
 	asset_id INTEGER NOT NULL, -- Insurance.asset_id
-	surrender_value DECIMAL(9,2) NOT NULL, -- 當年度解約金，整個 Insurance_Journal 只能有一筆
+	surrender_value DECIMAL(9,2) NOT NULL, -- 當年度解約金或預期價值，一個月只能有一筆
 	cost DECIMAL(9,2) NOT NULL, -- 會算入配息與所有支出，為計算當下報酬率
 	fx_rate DECIMAL(5,2) NOT NULL,
 	PRIMARY KEY (vesting_month, id, asset_id)
@@ -206,6 +207,7 @@ CREATE TABLE IF NOT EXISTS Journal (
 	action_main_table VARCHAR(15) NOT NULL,
 	-- action_main_name NVARCHAR(60) NOT NULL,
     action_sub VARCHAR(10) NOT NULL,
+	action_sub_type VARCHAR(20) NOT NULL,
 	action_sub_table VARCHAR(15) NOT NULL, -- id 對應的 table
 	-- action_sub_name NVARCHAR(60) NOT NULL,
     spending DECIMAL(9,2) NOT NULL, -- 收入為正，支出為負
@@ -234,7 +236,7 @@ CREATE TABLE IF NOT EXISTS Loan (
 CREATE TABLE IF NOT EXISTS Loan_Journal (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	loan_id INTEGER NOT NULL,
-	loan_excute_type VARCHAR(10) NOT NULL, -- principal:償還本金 / interest:支付利息 / increment:增貸 / fee:雜費
+	loan_excute_type VARCHAR(20) NOT NULL, -- principal:償還本金 / interest:支付利息 / increment:增貸 / fee:雜費
 	excute_price DECIMAL(9,2) NOT NULL,
 	excute_date DATE NOT NULL,
 	memo NVARCHAR(300)
@@ -248,7 +250,7 @@ CREATE TABLE IF NOT EXISTS Loan_Balance (
 	id INTEGER,
 	name NVARCHAR(60) NOT NULL,
     balance DECIMAL(9,2) NOT NULL,
-	-- fx_rate DECIMAL(5,2) NOT NULL,
+	cost DECIMAL(9,2) NOT NULL, -- 會算入繳息與所有支出，為計算當下總成本
 	PRIMARY KEY (vesting_month, id)
 );
 
@@ -284,7 +286,7 @@ CREATE TABLE IF NOT EXISTS Stock_Journal (
 CREATE TABLE IF NOT EXISTS Stock_Detail (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	stock_id INTEGER NOT NULL,
-	excute_type VARCHAR(10) NOT NULL, -- buy:買入/ sell:賣出/ stock:配股/ cash:配息
+	excute_type VARCHAR(20) NOT NULL, -- buy:買入/ sell:賣出/ stock:配股/ cash:配息
 	excute_amount INT, --以股為單位
 	excute_price DECIMAL(9,3),
 	excute_date DATE NOT NULL,

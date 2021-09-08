@@ -61,6 +61,26 @@ class Budget(db.Model):
     def getBudgetRange(self):
         return db.session.query(func.max(self.budget_year).label("max"), func.min(self.budget_year).label("min")).one()
 
+    def queryForExpenditureBudget(self, vestingMonth):
+        budgetColumn = 'expected'+vestingMonth[4:]
+        sql = []
+
+        sql.append(
+            f"SELECT code_type AS type, category_name AS name, spending, {budgetColumn} AS budget, {budgetColumn}-IFNULL(spending,0) AS quota FROM Budget ")
+        sql.append(
+            "LEFT JOIN (SELECT action_main, action_main_type, SUM(spending) AS spending FROM Journal ")
+        sql.append(
+            f"WHERE vesting_month = '{vestingMonth}' AND (action_main_type='Floating' OR action_main_type='Fixed') GROUP BY action_main, action_main_type) ")
+        sql.append(
+            "AS Journal ON category_code=action_main ")
+        # sql.append(
+        #     "LEFT JOIN Code_Data Code ON code_id=category_code AND Code.code_type=Budget.code_type ")
+        sql.append(
+            f"WHERE budget_year=substr({vestingMonth}, 0,5) ")
+        sql.append(" ORDER BY type ASC ")
+
+        return db.engine.execute(''.join(sql))
+
     def add(self, budget):
         db.session.add(budget)
         db.session.flush()
@@ -125,4 +145,13 @@ class Budget(db.Model):
         return {
             'min': thisYear if budget.min is None else int(budget.min),
             'max': thisYear if budget.min is None else int(budget.max)
+        }
+
+    def outputForBudget(self, Journal):
+        return {
+            'type': Journal.type,
+            'name': Journal.name,
+            'spending': Journal.spending,
+            'budget': Journal.budget,
+            'quota': Journal.quota
         }

@@ -79,19 +79,27 @@ class Insurance(db.Model):
     def query4Summary(self, vestingMonth):
         sql = []
         sql.append(
-            "SELECT '' AS vesting_month, Insurance.insurance_id AS id, insurance_name AS name, Insurance.asset_id, 0 AS surrender_value, IFNULL(cost,0) AS cost, IFNULL(buy_rate,1) AS fx_rate FROM Insurance ")
+            "SELECT '' AS vesting_month, Insurance.insurance_id AS id, insurance_name AS name, Insurance.asset_id, IFNULL(surrender_value,0) AS surrender_value, IFNULL(cost,0) AS cost, IFNULL(buy_rate,1) AS fx_rate FROM Insurance ")
         sql.append(
-            " LEFT JOIN (SELECT account_id, fx_code FROM Account) Account ON Account.account_id=in_account_id ")
+            " LEFT JOIN (SELECT id, fx_code FROM Account) Account ON Account.id=in_account_id ")
         sql.append(
             " LEFT JOIN (SELECT insurance_id, SUM(excute_price) AS cost FROM Insurance_Journal ")
         sql.append(
-            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}') Journal ON Journal.insurance_id = Insurance.insurance_id ")
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND (insurance_excute_type='pay' OR insurance_excute_type='cash') ")
+        sql.append(
+            " GROUP BY insurance_id) Journal_Cost ON Journal_Cost.insurance_id = Insurance.insurance_id ")
+        sql.append(
+            " LEFT JOIN (SELECT insurance_id, excute_price AS surrender_value FROM Insurance_Journal ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND (insurance_excute_type='expect' OR insurance_excute_type='return')) ")
+        sql.append(
+            " Journal_surrender ON Journal_surrender.insurance_id = Insurance.insurance_id ")
         sql.append(
             " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
         sql.append(
             f" WHERE STRFTIME('%Y%m', import_date) = '{vestingMonth}' GROUP BY code) Rate ON Rate.code = Account.fx_code ")
 
-        sql.append(" ORDER BY Insurance.insurance_id ASC")
+        sql.append(" WHERE has_closed='N' ORDER BY Insurance.insurance_id ASC")
 
         return db.engine.execute(''.join(sql))
 
