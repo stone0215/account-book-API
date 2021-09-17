@@ -136,7 +136,6 @@ CREATE TABLE IF NOT EXISTS FX_Rate (
 	import_date DATETIME,
 	code CHARACTER(3),
 	buy_rate DECIMAL(5,2) NOT NULL,
-    sell_rate DECIMAL(5,2) NOT NULL,
 	PRIMARY KEY (import_date, code)
 );
 
