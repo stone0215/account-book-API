@@ -88,14 +88,22 @@ class CreditCardBalance(db.Model):
         else:
             return False
 
-    def output(self, asset):
-        return {
-            'asset_id': asset.asset_id,
-            'vesting_month': asset.vesting_month,
-            'id': asset.id,
-            'name': asset.name,
-            'asset_id': asset.asset_id
-        }
+    def culculateBalance(self, vestingMonth, journals, cards):
+        cardArray = []
+        for card in cards:
+            obj = self(card)
+            obj.vesting_month = vestingMonth
+            for journal in journals:
+                # 處理扣項金額
+                if journal.spend_way_table == 'Credit_Card' and obj.id == int(journal.spend_way):
+                    obj.balance += journal.spending
+                # 處理加項金額
+                elif journal.action_sub_table == 'Credit_Card' and obj.id == int(journal.action_sub):
+                    obj.balance -= journal.spending
+
+            cardArray.append(obj)
+
+        return cardArray
 
     def outputForLiability(self, liability):
         return {
@@ -104,4 +112,14 @@ class CreditCardBalance(db.Model):
             'spending':  abs(liability.spending) if liability.spending else None,
             'payment':  abs(liability.payment) if liability.payment else None,
             'balance':  abs(liability.balance)
+        }
+
+    def outputForBalanceSheet(self, cards):
+        amount = 0
+        for card in cards:
+            amount += card.balance * card.fx_rate
+
+        return {
+            'name': '信用卡',
+            'amount': abs(amount)
         }

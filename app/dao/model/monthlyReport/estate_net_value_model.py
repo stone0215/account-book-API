@@ -13,6 +13,7 @@ class EstateNetValueHistory(db.Model):
     asset_id = db.Column(db.Integer, primary_key=True)
     market_value = db.Column(db.Float, nullable=False)
     cost = db.Column(db.Float, nullable=False)
+    estate_status = db.Column(db.String(10), nullable=False)
 
     # 物件建立之後所要建立的初始化動作
     def __init__(self, EstateNetValueHistory):
@@ -22,6 +23,7 @@ class EstateNetValueHistory(db.Model):
         self.asset_id = EstateNetValueHistory.asset_id
         self.market_value = EstateNetValueHistory.market_value
         self.cost = EstateNetValueHistory.cost
+        self.estate_status = EstateNetValueHistory.estate_status
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -46,11 +48,21 @@ class EstateNetValueHistory(db.Model):
         else:
             return False
 
-    def output(self, asset):
+    def outputForBalanceSheet(self, estates):
+        amount = 0
+        for estate in estates:
+            amount += estate.market_value
+
         return {
-            'asset_id': asset.asset_id,
-            'vesting_month': asset.vesting_month,
-            'id': asset.id,
-            'name': asset.name,
-            'asset_id': asset.asset_id
+            'type': '固定資產',
+            'name': '不動產',
+            'amount': amount
+        }
+
+    def outputForReport(self, estate):
+        return {
+            'assetType': '不動產',
+            'detailType': estate.estate_status,
+            'name': estate.name,
+            'amount': estate.market_value
         }

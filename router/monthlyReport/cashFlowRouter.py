@@ -5,7 +5,7 @@ from flask import jsonify, request
 from itertools import groupby
 
 from api.response_format import ResponseFormat
-from app.dao.model.liability.loan_modely import Loan
+from app.dao.model.liability.loan_model import Loan
 from app.dao.model.monthlyReport.journal_model import Journal
 from app.dao.model.monthlyReport.account_balance_model import AccountBalance
 from app.dao.model.monthlyReport.credit_card_balance_model import CreditCardBalance
@@ -26,16 +26,21 @@ date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
 def init_journal_api(app):
     @app.route('/journal/<string:vestingMonth>', methods=['GET'])
     def getJournalsByVestingMonth(vestingMonth):
-        output = []
+        journalList = []
+        gainLoss = 0
 
         try:
             journals = Journal.queryByVestingMonth(Journal, vestingMonth)
             for journal in journals:
-                output.append(Journal.output(Journal, journal))
+                if journal.action_main_table == 'Code':
+                    gainLoss += (round(journal.spending * int(journal.note), 2)
+                                 if journal.spend_way_type == 'finance' else journal.spending)
+
+                journalList.append(Journal.output(Journal, journal))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
-            return jsonify(ResponseFormat.true_return(ResponseFormat, output))
+            return jsonify(ResponseFormat.true_return(ResponseFormat, {"journalList": journalList, "gainLoss": gainLoss}))
 
     @app.route('/journal', methods=['POST'])
     def addJournal():
@@ -151,43 +156,13 @@ def init_journal_api(app):
             cards = CreditCard.query4Summary(
                 CreditCard, lastMonth, vestingMonth)
 
-            accountArray = []
-            for account in accounts:
-                obj = AccountBalance(account)
-                obj.vesting_month = vestingMonth
-                for journal in journals:
-                    # 處理扣項金額
-                    if journal.spend_way_table == 'Account' and obj.id == int(journal.spend_way):
-                        obj.balance += journal.spending
+            accountArray = AccountBalance.culculateBalance(
+                AccountBalance, vestingMonth, journals, accounts)
 
-                    # 處理加項金額
-                    if journal.action_sub_table == 'Account' and obj.id == int(journal.action_sub):
-                        if journal.spend_way_type == 'normal' and journal.action_sub_type == 'finance':
-                            obj.balance -= round(journal.spending /
-                                                 int(journal.note), 2)
-                        elif journal.spend_way_type == 'finance' and journal.action_sub_type == 'normal':
-                            obj.balance -= journal.spending*int(journal.note)
-                        else:
-                            obj.balance -= journal.spending
-
-                accountArray.append(obj)
-
-            cardArray = []
-            for card in cards:
-                obj = CreditCardBalance(card)
-                obj.vesting_month = vestingMonth
-                for journal in journals:
-                    # 處理扣項金額
-                    if journal.spend_way_table == 'Credit_Card' and obj.id == int(journal.spend_way):
-                        obj.balance += journal.spending
-                    # 處理加項金額
-                    elif journal.action_sub_table == 'Credit_Card' and obj.id == int(journal.action_sub):
-                        obj.balance -= journal.spending
-
-                cardArray.append(obj)
+            cardArray = CreditCardBalance.culculateBalance(
+                CreditCardBalance, vestingMonth, journals, cards)
 
             result = False
-
             if (len(accountArray) > 0):
                 result = AccountBalance.bulkInsert(
                     AccountBalance, accountArray)
@@ -235,15 +210,6 @@ def init_journal_api(app):
     def getInvestRatioByVestingMonth(vestingMonth):
 
         try:
-            # assets = Journal.queryForInvestRatio(
-            #     Journal, vestingMonth, 'action')
-            # assetInnerPie = []
-            # for key, groups in groupby(assets, lambda item: item.action):
-            #     spendings = [item.spending for item in list(groups)]
-            #     assetInnerPie.append(
-            #         {'name': key, 'value': abs(sum(spendings))})  # 取絕對值計算百分比
-
-            # 不確定是因為 groupby 後 assets 被清空還是什麼原因導致資料表被釋放，所以需要重撈，之後可以考慮改 panda
             assets = Journal.queryForInvestRatio(
                 Journal, vestingMonth)
             assetOuterPie = []

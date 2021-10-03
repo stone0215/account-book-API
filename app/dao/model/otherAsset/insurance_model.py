@@ -78,7 +78,7 @@ class Insurance(db.Model):
     def query4Summary(self, vestingMonth):
         sql = []
         sql.append(
-            "SELECT '' AS vesting_month, Insurance.insurance_id AS id, insurance_name AS name, Insurance.asset_id, IFNULL(surrender_value,0) AS surrender_value, IFNULL(cost,0) AS cost, IFNULL(buy_rate,1) AS fx_rate FROM Insurance ")
+            "SELECT '' AS vesting_month, Insurance.insurance_id AS id, insurance_name AS name, Insurance.asset_id, IFNULL(surrender_value,0) AS surrender_value, IFNULL(cost,0) AS cost, Account.fx_code AS fx_code, IFNULL(buy_rate,1) AS fx_rate FROM Insurance ")
         sql.append(
             " LEFT JOIN (SELECT id, fx_code FROM Account) Account ON Account.id=in_account_id ")
         sql.append(

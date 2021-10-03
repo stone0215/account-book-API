@@ -35,6 +35,17 @@ class LoanJournal(db.Model):
     def queryByLoanId(self, loan_id):
         return self.query.filter_by(loan_id=loan_id)
 
+    def queryForSpendingReport(self, start, end, format):
+        sql = []
+        sql.append(
+            f"SELECT STRFTIME('{format}', excute_date) AS dateString, 'Loan' AS type, excute_price AS amount, loan_name AS name FROM Loan_Journal ")
+        sql.append(" LEFT JOIN Loan ON Loan_Journal.loan_id=Loan.loan_id ")
+        sql.append(
+            f" WHERE (loan_excute_type='principal' OR loan_excute_type='interest') AND STRFTIME('{format}', excute_date) >= '{start}' AND STRFTIME('{format}', excute_date) <= '{end}' ")
+        sql.append(f" ORDER BY dateString ASC ")
+
+        return db.engine.execute(''.join(sql))
+
     def add(self, LoanJournal):
         db.session.add(LoanJournal)
         db.session.flush()
@@ -65,4 +76,12 @@ class LoanJournal(db.Model):
             'excute_price': LoanJournal.excute_price,
             'excute_date': LoanJournal.excute_date,
             'memo': LoanJournal.memo
+        }
+
+    def outputForReport(self, data):
+        return {
+            'dateString': data.dateString,
+            'type': data.type,
+            'name': data.name,
+            'amount': abs(data.amount)
         }

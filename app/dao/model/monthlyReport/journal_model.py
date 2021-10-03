@@ -151,36 +151,18 @@ class Journal(db.Model):
 
         return db.engine.execute(''.join(sql))
 
-        # sql = []
-        # sql.append(
-        #     "SELECT '賣出資產' AS action, CASE WHEN spend_way_type='finance' THEN '換匯' ELSE spend_way END AS target, ")
-        # sql.append(
-        #     "CASE WHEN spend_way_type='finance' THEN spending*note ELSE spending END AS spending FROM Journal ")
-        # sql.append(
-        #     f"WHERE vesting_month = '{vestingMonth}' AND (spend_way_type='Asset' OR (spend_way_type='finance' AND action_sub_type='normal')) ")
-        # sql.append(
-        #     " UNION ALL SELECT '買入資產' AS action, CASE WHEN action_sub_type='finance' THEN '換匯' ELSE action_sub END AS target, spending*-1 FROM Journal ")
-        # sql.append(
-        #     f"WHERE vesting_month = '{vestingMonth}' AND (action_sub_type='Asset' OR (spend_way_type='normal' AND action_sub_type='finance')) ")
-        # sql.append(f" ORDER BY {sortColumn} ASC ")
+    def queryForSpendingReport(self, start, end, format):
+        sql = []
+        sql.append(
+            f"SELECT STRFTIME('{format}', spend_date) AS dateString, spend_way_type, action_main_type, spending, note, name FROM Journal ")
+        sql.append(" LEFT JOIN Code_Data ON code_id=action_main ")
+        sql.append(
+            f" WHERE action_main_table='Code' AND STRFTIME('{format}', spend_date) >= '{start}' AND STRFTIME('{format}', spend_date) <= '{end}' ")
+        sql.append(f" ORDER BY dateString ASC ")
 
-    # def queryForExpenditureBudget(self, vestingMonth):
-    #     budgetColumn = 'expected'+vestingMonth[4:]
-    #     sql = []
+        print('2', ''.join(sql))
 
-    #     sql.append(
-    #         f"SELECT action_main_type AS type, name, SUM(spending) AS spending, {budgetColumn} AS budget, {budgetColumn}-SUM(spending) AS quota FROM Journal ")
-    #     sql.append(
-    #         "LEFT JOIN Code_Data Code ON code_id=action_main AND Code.code_type=action_main_type ")
-    #     sql.append(
-    #         f"LEFT JOIN Budget ON budget_year=substr({vestingMonth}, 0,5) AND category_code=action_main ")
-    #     sql.append(
-    #         f" WHERE vesting_month = '{vestingMonth}' AND (action_main_type='Floating' OR action_main_type='Fixed')  ")
-    #     sql.append(
-    #         "GROUP BY action_main, action_main_type ")
-    #     sql.append(f" ORDER BY type ASC ")
-
-    #     return db.engine.execute(''.join(sql))
+        return db.engine.execute(''.join(sql))
 
     def add(self, journal):
         db.session.add(journal)
@@ -224,11 +206,10 @@ class Journal(db.Model):
             # 'actionSubSelectionGroup': None  # 前端顯示所需，需先將欄位寫入
         }
 
-    # def outputForBudget(self, Journal):
-    #     return {
-    #         'type': Journal.type,
-    #         'name': Journal.name,
-    #         'spending': Journal.spending,
-    #         'budget': Journal.budget,
-    #         'quota': Journal.quota
-    #     }
+    def outputForReport(self, data):
+        return {
+            'dateString': data.dateString,
+            'type': data.action_main_type,
+            'name': data.name,
+            'amount': abs(round(data.spending * int(data.note), 2)) if data.spend_way_type == 'finance' else abs(data.spending)
+        }

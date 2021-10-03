@@ -5,7 +5,7 @@ from flask import jsonify, request
 
 from api.response_format import ResponseFormat
 from app.dao.model.liability.loan_journal_model import LoanJournal
-from app.dao.model.liability.loan_modely import Loan
+from app.dao.model.liability.loan_model import Loan
 
 date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
 

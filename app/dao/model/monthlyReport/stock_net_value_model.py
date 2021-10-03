@@ -52,11 +52,21 @@ class StockNetValueHistory(db.Model):
         else:
             return False
 
-    def output(self, asset):
+    def outputForBalanceSheet(self, stocks):
+        amount = 0
+        for stock in stocks:
+            amount += stock.price * stock.fx_rate
+
         return {
-            'asset_id': asset.asset_id,
-            'vesting_month': asset.vesting_month,
-            'id': asset.id,
-            'stock_name': asset.stock_name,
-            'asset_id': asset.asset_id
+            'type': '流動資產',
+            'name': '股票',
+            'amount': amount
+        }
+
+    def outputForReport(self, stock):
+        return {
+            'assetType': '股票',
+            'detailType': stock.asset_name,
+            'name': stock.stock_code,
+            'amount': stock.price * stock.fx_rate
         }

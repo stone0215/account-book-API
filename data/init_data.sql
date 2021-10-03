@@ -226,9 +226,9 @@ SELECT NULL, '自己手邊', 'cash', 'TWD', 'N', 'Y', NULL, NULL, NULL UNION ALL
 SELECT '807-1234567890', '永豐大戶', 'normal', 'TWD', 'Y', 'Y', NULL, '活存50萬內1.1%及免費跨行轉提20次，至2021年12月31日', NULL )
 WHERE NOT EXISTS ( SELECT NULL FROM Account );
 
-INSERT INTO Account_Balance (vesting_month, id, name ,balance, fx_rate)
+INSERT INTO Account_Balance (vesting_month, id, name ,balance, fx_code, fx_rate, is_calculate)
 SELECT * FROM (
-SELECT '202012', ( SELECT id FROM Account WHERE name='永豐大戶' ), '永豐大戶', 123456, 1 )
+SELECT '202012', ( SELECT id FROM Account WHERE name='永豐大戶' ), '永豐大戶', 123456, 'TWD', 1, 'Y' )
 WHERE NOT EXISTS ( SELECT NULL FROM Account_Balance );
 
 -- 其他資產

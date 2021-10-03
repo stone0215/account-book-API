@@ -59,9 +59,9 @@ class Account(db.Model):
     def query4Summary(self, lastMonth, vestingMonth):
         sql = []
         sql.append(
-            "SELECT '' AS vesting_month, Account.id, Account.name, IFNULL(balance,0) AS balance, IFNULL(buy_rate,1) AS fx_rate FROM Account ")
+            "SELECT '' AS vesting_month, Account.id, Account.name, IFNULL(balance,0) AS balance, Account.fx_code, IFNULL(buy_rate,1) AS fx_rate, Account.is_calculate ")
         sql.append(
-            f" LEFT JOIN Account_Balance Balance ON Balance.vesting_month = '{lastMonth}' AND Balance.id=Account.id ")
+            f" FROM Account LEFT JOIN Account_Balance Balance ON Balance.vesting_month = '{lastMonth}' AND Balance.id=Account.id ")
         sql.append(
             " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
         sql.append(

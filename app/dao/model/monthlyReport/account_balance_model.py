@@ -11,7 +11,9 @@ class AccountBalance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60), nullable=False)
     balance = db.Column(db.Float, nullable=False)
+    fx_code = db.Column(db.String(3), nullable=False)
     fx_rate = db.Column(db.Float, nullable=False)
+    is_calculate = db.Column(db.String(1), nullable=False)
 
     # 物件建立之後所要建立的初始化動作
     def __init__(self, AccountBalance):
@@ -19,7 +21,9 @@ class AccountBalance(db.Model):
         self.id = AccountBalance.id
         self.name = AccountBalance.name
         self.balance = AccountBalance.balance
+        self.fx_code = AccountBalance.fx_code
         self.fx_rate = AccountBalance.fx_rate
+        self.is_calculate = AccountBalance.is_calculate
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -29,13 +33,13 @@ class AccountBalance(db.Model):
         return self.query.filter_by(vesting_month=vesting_month).all()
 
     def bulkInsert(self, datas):
-        sql = 'INSERT INTO Account_Balance(vesting_month, id, name, balance, fx_rate) VALUES(:1, :2, :3, :4, :5)'
+        sql = 'INSERT INTO Account_Balance(vesting_month, id, name, balance, fx_rate, is_calculate) VALUES(:1, :2, :3, :4, :5, :6)'
 
         params = []
         try:
             for item in datas:
                 params.append((item.vesting_month, item.id,
-                               item.name, item.balance, item.fx_rate))
+                               item.name, item.balance, item.fx_rate, item.is_calculate))
 
             db.engine.execute(sql, params)
             return True
@@ -50,11 +54,46 @@ class AccountBalance(db.Model):
         else:
             return False
 
-    def output(self, asset):
+    def culculateBalance(self, vestingMonth, journals, accounts):
+        accountArray = []
+        for account in accounts:
+            obj = AccountBalance(account)
+            obj.vesting_month = vestingMonth
+            for journal in journals:
+                # 處理扣項金額
+                if journal.spend_way_table == 'Account' and obj.id == int(journal.spend_way):
+                    obj.balance += journal.spending
+
+                # 處理加項金額
+                if journal.action_sub_table == 'Account' and obj.id == int(journal.action_sub):
+                    if journal.spend_way_type == 'normal' and journal.action_sub_type == 'finance':
+                        obj.balance -= round(journal.spending /
+                                             int(journal.note), 2)
+                    elif journal.spend_way_type == 'finance' and journal.action_sub_type == 'normal':
+                        obj.balance -= journal.spending*int(journal.note)
+                    else:
+                        obj.balance -= journal.spending
+
+            accountArray.append(obj)
+
+        return accountArray
+
+    def outputForBalanceSheet(self, accounts):
+        amount = 0
+        for account in accounts:
+            if (account.is_calculate == 'Y'):
+                amount += account.balance * account.fx_rate
+
         return {
-            'asset_id': asset.asset_id,
-            'vesting_month': asset.vesting_month,
-            'id': asset.id,
-            'name': asset.name,
-            'asset_id': asset.asset_id
+            'type': '流動資產',
+            'name': '現金',
+            'amount': amount
+        }
+
+    def outputForReport(self, account):
+        return {
+            'assetType': '現金',
+            'detailType': account.fx_code,
+            'name': account.name,
+            'amount': account.balance * account.fx_rate
         }

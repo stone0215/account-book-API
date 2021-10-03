@@ -4,7 +4,7 @@ from itertools import groupby
 from api.response_format import ResponseFormat
 from app.dao.model.setting.account_model import Account
 from app.dao.model.setting.credit_card_model import CreditCard
-from app.dao.model.liability.loan_modely import Loan
+from app.dao.model.liability.loan_model import Loan
 from app.dao.model.setting.code_model import Code
 from app.dao.model.otherAsset.insurance_model import Insurance
 

@@ -44,11 +44,12 @@ class LoanBalance(db.Model):
         else:
             return False
 
-    def output(self, asset):
+    def outputForBalanceSheet(self, loans):
+        amount = 0
+        for loan in loans:
+            amount += loan.balance
+
         return {
-            'asset_id': asset.asset_id,
-            'vesting_month': asset.vesting_month,
-            'id': asset.id,
-            'name': asset.name,
-            'asset_id': asset.asset_id
+            'name': '貸款',
+            'amount': amount
         }

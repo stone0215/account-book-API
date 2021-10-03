@@ -69,11 +69,15 @@ class Estate(db.Model):
     def query4Summary(self, vestingMonth):
         sql = []
         sql.append(
-            "SELECT '' AS vesting_month, Estate.estate_id AS id, estate_name AS name, Estate.asset_id, 0 AS market_value, IFNULL(cost,0) AS cost FROM Estate ")
+            "SELECT '' AS vesting_month, Estate.estate_id AS id, estate_name AS name, Estate.asset_id, IFNULL(market_value,0) AS market_value, IFNULL(cost,0) AS cost, estate_status FROM Estate ")
         sql.append(
             " LEFT JOIN (SELECT estate_id, SUM(excute_price) AS cost FROM Estate_Journal ")
         sql.append(
-            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' GROUP BY estate_id) Journal ON Journal.estate_id = Estate.estate_id ")
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND estate_excute_type != 'marketValue' GROUP BY estate_id) Journal ON Journal.estate_id = Estate.estate_id ")
+        sql.append(
+            " LEFT JOIN (SELECT estate_id, excute_price AS market_value FROM Estate_Journal ")
+        sql.append(
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND estate_excute_type = 'marketValue') Journal_Market ON Journal_Market.estate_id = Estate.estate_id ")
 
         sql.append(" WHERE estate_status != 'sold' ORDER BY Estate.estate_id ASC")
 

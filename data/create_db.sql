@@ -19,7 +19,9 @@ CREATE TABLE IF NOT EXISTS Account_Balance (
 	name NVARCHAR(60) NOT NULL,
 	-- vesting_table VARCHAR(15) NOT NULL,
     balance DECIMAL(9,2) NOT NULL,
+	fx_code CHARACTER(3) NOT NULL,
 	fx_rate DECIMAL(5,2) NOT NULL,
+	is_calculate CHARACTER(1) NOT NULL,
 	PRIMARY KEY (vesting_month, id)
 );
 
@@ -128,6 +130,7 @@ CREATE TABLE IF NOT EXISTS Estate_Net_Value_History (
 	asset_id INTEGER NOT NULL, -- Estate.asset_id
 	market_value DECIMAL(9,2) NOT NULL, -- 從估價網站輸入對等條件取值填入
 	cost DECIMAL(9,2) NOT NULL, -- 會算入所有支出收入，為計算當下報酬率
+	estate_status VARCHAR(10) NOT NULL,
 	PRIMARY KEY (vesting_month, id, asset_id)
 );
 
@@ -188,6 +191,7 @@ CREATE TABLE IF NOT EXISTS Insurance_Net_Value_History (
 	asset_id INTEGER NOT NULL, -- Insurance.asset_id
 	surrender_value DECIMAL(9,2) NOT NULL, -- 當年度解約金或預期價值，一個月只能有一筆
 	cost DECIMAL(9,2) NOT NULL, -- 會算入配息與所有支出，為計算當下報酬率
+	fx_code CHARACTER(3) NOT NULL,
 	fx_rate DECIMAL(5,2) NOT NULL,
 	PRIMARY KEY (vesting_month, id, asset_id)
 );
@@ -305,6 +309,7 @@ CREATE TABLE IF NOT EXISTS Stock_Net_Value_History (
 	amount INT NOT NULL,
 	price DECIMAL(7,3) NOT NULL,
 	cost DECIMAL(9,2) NOT NULL, -- 會算入配息，為計算當下報酬率
+	fx_code CHARACTER(3) NOT NULL,
 	fx_rate DECIMAL(5,2) NOT NULL,
 	PRIMARY KEY (vesting_month, id, asset_id)
 );

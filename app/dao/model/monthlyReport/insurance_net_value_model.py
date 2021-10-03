@@ -13,6 +13,7 @@ class InsuranceNetValueHistory(db.Model):
     asset_id = db.Column(db.Integer, primary_key=True)
     surrender_value = db.Column(db.Float, nullable=False)
     cost = db.Column(db.Float, nullable=False)
+    fx_code = db.Column(db.String(3), nullable=False)
     fx_rate = db.Column(db.Float, nullable=False)
 
     # 物件建立之後所要建立的初始化動作
@@ -23,6 +24,7 @@ class InsuranceNetValueHistory(db.Model):
         self.asset_id = InsuranceNetValueHistory.asset_id
         self.surrender_value = InsuranceNetValueHistory.surrender_value
         self.cost = InsuranceNetValueHistory.cost
+        self.fx_code = InsuranceNetValueHistory.fx_code
         self.fx_rate = InsuranceNetValueHistory.fx_rate
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
@@ -48,11 +50,21 @@ class InsuranceNetValueHistory(db.Model):
         else:
             return False
 
-    def output(self, asset):
+    def outputForBalanceSheet(self, insurances):
+        amount = 0
+        for insurance in insurances:
+            amount += insurance.surrender_value * insurance.fx_rate
+
         return {
-            'asset_id': asset.asset_id,
-            'vesting_month': asset.vesting_month,
-            'id': asset.id,
-            'name': asset.name,
-            'asset_id': asset.asset_id
+            'type': '固定資產',
+            'name': '儲蓄險',
+            'amount': amount
+        }
+
+    def outputForReport(self, insurance):
+        return {
+            'assetType': '保險',
+            'detailType': insurance.fx_code,
+            'name': insurance.name,
+            'amount': insurance.surrender_value * insurance.fx_rate
         }
