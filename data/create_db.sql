@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS Account (
 	in_use CHARACTER(1) NOT NULL,
 	discount DECIMAL(4,3), -- 最多總共四位，小數點三位
 	memo NVARCHAR(300), -- 活存利率等
+	owner NVARCHAR(60),
 	account_index TINYINT
 );
 
@@ -30,7 +31,8 @@ CREATE TABLE IF NOT EXISTS Alarm (
     alarm_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	alarm_type VARCHAR(10) NOT NULL,
 	alarm_date VARCHAR(5) NOT NULL,
-    content NVARCHAR(60) NOT NULL
+    content NVARCHAR(60) NOT NULL,
+	due_date DATE
 );
 
 -- 預算設定檔
@@ -327,7 +329,8 @@ CREATE INDEX IF NOT EXISTS Stock_Price_History_idx ON Stock_Price_History (stock
 
 -- 年度目標設定檔
 CREATE TABLE IF NOT EXISTS Target_Setting (
-	target_year SMALLINT PRIMARY KEY,
-    name NVARCHAR(60) NOT NULL,
-	setting_value NVARCHAR(45) NOT NULL -- 描述該年度目標
+	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+	target_year CHARACTER(4) NOT NULL,
+	setting_value NVARCHAR(45) NOT NULL, -- 描述該年度目標
+	is_done CHARACTER(1) NOT NULL
 );

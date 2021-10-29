@@ -28,6 +28,34 @@ class LoanBalance(db.Model):
     def queryByVestingMonth(self, vesting_month):
         return self.query.filter_by(vesting_month=vesting_month).all()
 
+    def getDebtBalanceHistory(self, start, end, type):
+        sql = []
+
+        # 信用卡
+        sql.append(
+            f"SELECT vesting_month AS dateString, 'debt' AS type, balance, fx_rate FROM Credit_Card_Balance WHERE ")
+        if type == 'month':
+            sql.append(
+                f" vesting_month >= '{start}' AND vesting_month <= '{end}' ")
+        else:
+            sql.append(
+                f" vesting_month >= '{start}12' AND vesting_month <= '{end}12' AND substr(vesting_month, 4,2) = '12' ")
+
+        sql.append(" UNION ALL ")
+        # 貸款
+        sql.append(
+            f"SELECT vesting_month AS dateString, 'debt' AS type, balance, 1 AS fx_rate FROM Loan_Balance WHERE ")
+        if type == 'month':
+            sql.append(
+                f" vesting_month >= '{start}' AND vesting_month <= '{end}' ")
+        else:
+            sql.append(
+                f" vesting_month >= '{start}12' AND vesting_month <= '{end}12' AND substr(vesting_month, 4,2) = '12' ")
+
+        sql.append(" ORDER BY type, dateString ASC ")
+
+        return db.engine.execute(''.join(sql))
+
     def add(self, LoanBalance):
         db.session.add(LoanBalance)
         db.session.flush()

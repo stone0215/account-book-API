@@ -16,6 +16,7 @@ from .otherAssetAndLiabilities.otherAssetRouter import init_other_asset_api
 from .otherAssetAndLiabilities.stockAssetRouter import init_stock_asset_api
 from .utilRouter import init_util_api
 from .yearReport.reportRouter import init_report_api
+from .dashboardRouter import init_dashboard_api
 
 
 def init(app):
@@ -41,3 +42,4 @@ def init(app):
     init_liability_api(app)
     init_journal_api(app)
     init_report_api(app)
+    init_dashboard_api(app)

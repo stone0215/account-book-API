@@ -21,54 +21,13 @@ from app.dao.model.liability.loan_journal_model import LoanJournal
 
 def init_report_api(app):
     @app.route('/report/balance', methods=['GET'])
-    def getBalanceSheetByMonth():
+    def getBalanceSheet():
         try:
-            thisMonth = datetime.now().strftime("%Y%m")
-            lastMonth = (datetime.now().replace(day=1) -
-                         timedelta(days=1)).strftime("%Y%m")
-
-            journals = Journal.queryByVestingMonth(Journal, thisMonth)
-            journals.sort(key=lambda item: (
-                item.spend_way_table, item.spend_way))
-            accounts = Account.query4Summary(Account, lastMonth, thisMonth)
-
-            # 取得現金資產
-            accountBalances = AccountBalance.culculateBalance(
-                AccountBalance, thisMonth, journals, accounts)
-            # 取得股票資產
-            stocks = StockJournal.query4Summary(StockJournal, thisMonth)
-            # 取得儲蓄險資產
-            insurances = Insurance.query4Summary(Insurance, thisMonth)
-            # 取得不動產資產
-            estates = Estate.query4Summary(Estate, thisMonth)
-
-            assets = []
-            assets.append(AccountBalance.outputForBalanceSheet(
-                AccountBalance, accountBalances))
-            assets.append(StockNetValueHistory.outputForBalanceSheet(
-                StockNetValueHistory, stocks))
-            assets.append(InsuranceNetValueHistory.outputForBalanceSheet(
-                InsuranceNetValueHistory, insurances))
-            assets.append(EstateNetValueHistory.outputForBalanceSheet(
-                EstateNetValueHistory, estates))
-
-            cards = CreditCard.query4Summary(CreditCard, lastMonth, thisMonth)
-
-            # 取得信用卡負債
-            cardBalances = CreditCardBalance.culculateBalance(
-                CreditCardBalance, thisMonth, journals, cards)
-            # 取得貸款負債
-            loans = Loan.query4Summary(Loan, thisMonth)
-
-            debts = []
-            debts.append(CreditCardBalance.outputForBalanceSheet(
-                CreditCardBalance, cardBalances))
-            debts.append(LoanBalance.outputForBalanceSheet(LoanBalance, loans))
-
+            result = getBalanceSheetByNow()
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
-            return jsonify(ResponseFormat.true_return(ResponseFormat, {'assets': assets, 'debts': debts}))
+            return jsonify(ResponseFormat.true_return(ResponseFormat, result))
 
     @app.route('/report/expenditure/<string:type>/<string:vestingMonth>', methods=['GET'])
     def getSpendingReport(type, vestingMonth):
@@ -138,3 +97,53 @@ def init_report_api(app):
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
             return jsonify(ResponseFormat.true_return(ResponseFormat, output))
+
+
+def getBalanceSheetByNow():
+    try:
+        thisMonth = datetime.now().strftime("%Y%m")
+        lastMonth = (datetime.now().replace(day=1) -
+                     timedelta(days=1)).strftime("%Y%m")
+
+        journals = Journal.queryByVestingMonth(Journal, thisMonth)
+        journals.sort(key=lambda item: (
+            item.spend_way_table, item.spend_way))
+        accounts = Account.query4Summary(Account, lastMonth, thisMonth)
+
+        # 取得現金資產
+        accountBalances = AccountBalance.culculateBalance(
+            AccountBalance, thisMonth, journals, accounts)
+        # 取得股票資產
+        stocks = StockJournal.query4Summary(StockJournal, thisMonth)
+        # 取得儲蓄險資產
+        insurances = Insurance.query4Summary(Insurance, thisMonth)
+        # 取得不動產資產
+        estates = Estate.query4Summary(Estate, thisMonth)
+
+        assets = []
+        assets.append(AccountBalance.outputForBalanceSheet(
+            AccountBalance, accountBalances))
+        assets.append(StockNetValueHistory.outputForBalanceSheet(
+            StockNetValueHistory, stocks))
+        assets.append(InsuranceNetValueHistory.outputForBalanceSheet(
+            InsuranceNetValueHistory, insurances))
+        assets.append(EstateNetValueHistory.outputForBalanceSheet(
+            EstateNetValueHistory, estates))
+
+        cards = CreditCard.query4Summary(CreditCard, lastMonth, thisMonth)
+
+        # 取得信用卡負債
+        cardBalances = CreditCardBalance.culculateBalance(
+            CreditCardBalance, thisMonth, journals, cards)
+        # 取得貸款負債
+        loans = Loan.query4Summary(Loan, thisMonth)
+
+        debts = []
+        debts.append(CreditCardBalance.outputForBalanceSheet(
+            CreditCardBalance, cardBalances))
+        debts.append(LoanBalance.outputForBalanceSheet(LoanBalance, loans))
+
+    except Exception as error:
+        raise
+    else:
+        return {'assets': assets, 'debts': debts}

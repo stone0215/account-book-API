@@ -14,6 +14,7 @@ class Account(db.Model):
     in_use = db.Column(db.String(1), nullable=False, index=True)
     discount = db.Column(db.Float)
     memo = db.Column(db.Text)
+    owner = db.Column(db.String(60))
     account_index = db.Column(db.SmallInteger)
 
     # 物件建立之後所要建立的初始化動作
@@ -26,6 +27,7 @@ class Account(db.Model):
         self.in_use = Account['in_use']  # Y/M
         self.discount = Account['discount']
         self.memo = Account['memo']
+        self.owner = Account['owner']
         self.account_index = Account['account_index'] or None
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
@@ -104,6 +106,7 @@ class Account(db.Model):
             'in_use': Account.in_use,
             'discount': Account.discount,
             'memo': Account.memo,
+            'owner': Account.owner,
             'account_index': Account.account_index
         }
 

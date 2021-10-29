@@ -1,9 +1,12 @@
 # -*- coding: UTF-8 -*-
 
+from datetime import datetime
 from flask import jsonify, request
 
 from api.response_format import ResponseFormat
 from app.dao.model.setting.alarm_model import Alarm
+
+date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
 def init_alarm_api(app):
@@ -35,13 +38,16 @@ def init_alarm_api(app):
 
     @app.route('/alarm', methods=['POST'])
     def addAlarm():
+        global date_format
+
         try:
             # force=True 忽略mimetype，只接字串
             inputData = request.get_json(force=True)
-            alarm = Alarm(alarm_type=inputData['alarm_type'], alarm_date=inputData['alarm_date'],
-                          content=inputData['content'])
-
+            inputData['due_date'] = datetime.strptime(
+                inputData['due_date'], date_format) if inputData['due_date'] else None
+            alarm = Alarm(inputData)
             result = Alarm.add(Alarm, alarm)
+
             if result:
                 return jsonify(ResponseFormat.true_return(ResponseFormat, Alarm.output(Alarm, result)))
             else:
@@ -51,6 +57,8 @@ def init_alarm_api(app):
 
     @app.route('/alarm/<int:alarmId>', methods=['PUT'])
     def updateAlarm(alarmId):
+        global date_format
+
         try:
             alarm = Alarm.queryByKey(Alarm, alarmId)
             if alarm is None:
@@ -61,6 +69,9 @@ def init_alarm_api(app):
                 alarm.alarm_type = inputData['alarm_type']
                 alarm.alarm_date = inputData['alarm_date']
                 alarm.content = inputData['content']
+                alarm.due_date = datetime.strptime(
+                    inputData['due_date'], date_format) if inputData['due_date'] else None
+
                 if Alarm.update(Alarm):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
                 else:

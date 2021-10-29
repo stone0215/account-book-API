@@ -81,6 +81,7 @@ def init_journal_api(app):
                 journal.action_main_type = inputData['action_main_type']
                 journal.action_main_table = inputData['action_main_table']
                 journal.action_sub = inputData['action_sub']
+                journal.action_sub_type = inputData['action_sub_type']
                 journal.action_sub_table = inputData['action_sub_table']
                 journal.spending = inputData['spending']
                 journal.note = inputData['note']

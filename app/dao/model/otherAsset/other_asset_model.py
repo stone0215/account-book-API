@@ -33,6 +33,53 @@ class OtherAsset(db.Model):
     def getDistinctItems(self):
         return self.query.with_entities(self.asset_id, self.asset_name, self.asset_type).filter_by(in_use='Y').distinct().all()
 
+    def getAssetBalanceHistory(self, start, end, type):
+        sql = []
+
+        # 帳戶
+        sql.append(
+            f"SELECT vesting_month AS dateString, balance, fx_rate FROM Account_Balance WHERE ")
+        if type == 'month':
+            sql.append(
+                f" vesting_month >= '{start}' AND vesting_month <= '{end}' ")
+        else:
+            sql.append(
+                f" vesting_month >= '{start}12' AND vesting_month <= '{end}12' AND substr(vesting_month, 4,2) = '12' ")
+
+        sql.append(" UNION ALL ")
+        # 不動產
+        sql.append(
+            f"SELECT vesting_month AS dateString, market_value AS balance, 1 AS fx_rate FROM Estate_Net_Value_History WHERE ")
+        if type == 'month':
+            sql.append(
+                f" vesting_month >= '{start}' AND vesting_month <= '{end}' ")
+        else:
+            sql.append(
+                f" vesting_month >= '{start}12' AND vesting_month <= '{end}12' AND substr(vesting_month, 4,2) = '12' ")
+        sql.append(" UNION ALL ")
+        # 保險
+        sql.append(
+            f"SELECT vesting_month AS dateString, surrender_value AS balance, fx_rate FROM Insurance_Net_Value_History WHERE ")
+        if type == 'month':
+            sql.append(
+                f" vesting_month >= '{start}' AND vesting_month <= '{end}' ")
+        else:
+            sql.append(
+                f" vesting_month >= '{start}12' AND vesting_month <= '{end}12' AND substr(vesting_month, 4,2) = '12' ")
+        sql.append(" UNION ALL ")
+        # 股票
+        sql.append(
+            f"SELECT vesting_month AS dateString, price AS balance, fx_rate FROM Stock_Net_Value_History WHERE ")
+        if type == 'month':
+            sql.append(
+                f" vesting_month >= '{start}' AND vesting_month <= '{end}' ")
+        else:
+            sql.append(
+                f" vesting_month >= '{start}12' AND vesting_month <= '{end}12' AND substr(vesting_month, 4,2) = '12' ")
+        sql.append(" ORDER BY dateString ASC ")
+
+        return db.engine.execute(''.join(sql))
+
     def add(self, other_asset):
         db.session.add(other_asset)
         db.session.flush()

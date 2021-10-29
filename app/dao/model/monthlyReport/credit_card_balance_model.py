@@ -117,7 +117,7 @@ class CreditCardBalance(db.Model):
     def outputForBalanceSheet(self, cards):
         amount = 0
         for card in cards:
-            amount += card.balance * card.fx_rate
+            amount += round(card.balance * card.fx_rate, 2)
 
         return {
             'name': '信用卡',

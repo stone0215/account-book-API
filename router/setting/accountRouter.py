@@ -4,7 +4,7 @@ from flask import jsonify, request
 
 from api.response_format import ResponseFormat
 from app.dao.model.setting.account_model import Account
-from app.dao.model.setting.initial_model import InitialSetting
+# from app.dao.model.setting.initial_model import InitialSetting
 
 
 def init_account_api(app):
@@ -61,6 +61,7 @@ def init_account_api(app):
                 account.in_use = inputData['in_use']
                 account.discount = inputData['discount']
                 account.memo = inputData['memo']
+                account.owner = inputData['owner']
                 account.account_index = inputData['account_index']
                 if Account.update(Account):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))

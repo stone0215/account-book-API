@@ -11,19 +11,19 @@ db = DaoBase().getDB()
 
 class Budget(db.Model):
     __tablename__ = 'Budget'
-    budget_year = db.Column(db.String(6), primary_key=True)
+    budget_year = db.Column(db.String(4), primary_key=True)
     category_code = db.Column(db.String(10), primary_key=True)
     category_name = db.Column(db.String(60), nullable=False)
     code_type = db.Column(db.String(10), nullable=False, index=True)
-    expected1 = db.Column(db.Float, nullable=False)
-    expected2 = db.Column(db.Float, nullable=False)
-    expected3 = db.Column(db.Float, nullable=False)
-    expected4 = db.Column(db.Float, nullable=False)
-    expected5 = db.Column(db.Float, nullable=False)
-    expected6 = db.Column(db.Float, nullable=False)
-    expected7 = db.Column(db.Float, nullable=False)
-    expected8 = db.Column(db.Float, nullable=False)
-    expected9 = db.Column(db.Float, nullable=False)
+    expected01 = db.Column(db.Float, nullable=False)
+    expected02 = db.Column(db.Float, nullable=False)
+    expected03 = db.Column(db.Float, nullable=False)
+    expected04 = db.Column(db.Float, nullable=False)
+    expected05 = db.Column(db.Float, nullable=False)
+    expected06 = db.Column(db.Float, nullable=False)
+    expected07 = db.Column(db.Float, nullable=False)
+    expected08 = db.Column(db.Float, nullable=False)
+    expected09 = db.Column(db.Float, nullable=False)
     expected10 = db.Column(db.Float, nullable=False)
     expected11 = db.Column(db.Float, nullable=False)
     expected12 = db.Column(db.Float, nullable=False)
@@ -34,15 +34,15 @@ class Budget(db.Model):
         self.category_code = category_code  # Code_Data.code_id
         self.category_name = category_name  # Code_Data.name
         self.code_type = code_type  # Code_Data.code_type
-        self.expected1 = expected1
-        self.expected2 = expected2
-        self.expected3 = expected3
-        self.expected4 = expected4
-        self.expected5 = expected5
-        self.expected6 = expected6
-        self.expected7 = expected7
-        self.expected8 = expected8
-        self.expected9 = expected9
+        self.expected01 = expected1
+        self.expected02 = expected2
+        self.expected03 = expected3
+        self.expected04 = expected4
+        self.expected05 = expected5
+        self.expected06 = expected6
+        self.expected07 = expected7
+        self.expected08 = expected8
+        self.expected09 = expected9
         self.expected10 = expected10
         self.expected11 = expected11
         self.expected12 = expected12
@@ -81,6 +81,22 @@ class Budget(db.Model):
 
         return db.engine.execute(''.join(sql))
 
+    def query4Summary(self, year):
+        sql = []
+
+        sql.append(
+            "SELECT SUM(expected01) AS expected01, SUM(expected02) AS expected02, SUM(expected03) AS expected03, ")
+        sql.append(
+            "SUM(expected04) AS expected04, SUM(expected05) AS expected05, SUM(expected06) AS expected06, SUM(expected07) AS expected07, ")
+        sql.append(
+            "SUM(expected08) AS expected08, SUM(expected09) AS expected09, SUM(expected10) AS expected10, ")
+        sql.append(
+            "SUM(expected11) AS expected11, SUM(expected12) AS expected12 FROM Budget ")
+        sql.append(
+            f"WHERE budget_year = '{year}' GROUP BY budget_year")
+
+        return db.engine.execute(''.join(sql))
+
     def add(self, budget):
         db.session.add(budget)
         db.session.flush()
@@ -106,7 +122,7 @@ class Budget(db.Model):
             return False
 
     def update(self, datas):
-        sql = 'UPDATE Budget SET expected1=:1, expected2=:2, expected3=:3, expected4=:4, expected5=:5, expected6=:6, expected7=:7, expected8=:8, expected9=:9, expected10=:10, expected11=:11, expected12=:12 WHERE budget_year=:13 AND category_code=:14'
+        sql = 'UPDATE Budget SET expected01=:1, expected02=:2, expected03=:3, expected04=:4, expected05=:5, expected06=:6, expected07=:7, expected08=:8, expected09=:9, expected10=:10, expected11=:11, expected12=:12 WHERE budget_year=:13 AND category_code=:14'
 
         params = []
         try:
@@ -126,15 +142,15 @@ class Budget(db.Model):
             'category_code': budget.category_code,
             'category_name': budget.category_name,
             'code_type': budget.code_type,
-            'expected1': budget.expected1,
-            'expected2': budget.expected2,
-            'expected3': budget.expected3,
-            'expected4': budget.expected4,
-            'expected5': budget.expected5,
-            'expected6': budget.expected6,
-            'expected7': budget.expected7,
-            'expected8': budget.expected8,
-            'expected9': budget.expected9,
+            'expected1': budget.expected01,
+            'expected2': budget.expected02,
+            'expected3': budget.expected03,
+            'expected4': budget.expected04,
+            'expected5': budget.expected05,
+            'expected6': budget.expected06,
+            'expected7': budget.expected07,
+            'expected8': budget.expected08,
+            'expected9': budget.expected09,
             'expected10': budget.expected10,
             'expected11': budget.expected11,
             'expected12': budget.expected12

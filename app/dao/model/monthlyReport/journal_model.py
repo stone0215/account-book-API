@@ -158,9 +158,26 @@ class Journal(db.Model):
         sql.append(" LEFT JOIN Code_Data ON code_id=action_main ")
         sql.append(
             f" WHERE action_main_table='Code' AND STRFTIME('{format}', spend_date) >= '{start}' AND STRFTIME('{format}', spend_date) <= '{end}' ")
-        sql.append(f" ORDER BY dateString ASC ")
+        sql.append(" ORDER BY dateString ASC ")
 
-        print('2', ''.join(sql))
+        return db.engine.execute(''.join(sql))
+
+    def getGiftedList(self, year):
+        sql = []
+        sql.append(
+            "SELECT Account_From.owner, SUM(spending*IFNULL(buy_rate,1)) AS amount FROM Journal ")
+        sql.append(
+            "LEFT JOIN Account AS Account_From ON Account_From.id=spend_way ")
+        sql.append(
+            "LEFT JOIN Account AS Account_To ON Account_To.id=action_sub ")
+        sql.append(
+            "LEFT JOIN FX_Rate ON Account_From.fx_code=code AND spend_date=import_date ")
+        sql.append(
+            "WHERE spend_way_table='Account' AND action_sub_table='Account' AND action_main='Transfer' AND Account_From.owner IS NOT NULL ")
+        sql.append(
+            f"AND STRFTIME('%Y', spend_date)='{year}' AND Account_From.owner != Account_To.owner ")
+        sql.append(
+            "GROUP BY Account_From.owner ")
 
         return db.engine.execute(''.join(sql))
 
@@ -212,4 +229,11 @@ class Journal(db.Model):
             'type': data.action_main_type,
             'name': data.name,
             'amount': abs(round(data.spending * int(data.note), 2)) if data.spend_way_type == 'finance' else abs(data.spending)
+        }
+
+    def outputForGifted(self, data):
+        return {
+            'owner': data.owner,
+            'rate': abs(round(data.amount*100/2200000, 2)),
+            'amount': abs(data.amount)
         }

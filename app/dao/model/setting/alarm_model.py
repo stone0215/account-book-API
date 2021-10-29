@@ -10,12 +10,14 @@ class Alarm(db.Model):
     alarm_type = db.Column(db.String(1), nullable=False)
     alarm_date = db.Column(db.String(5), nullable=False, index=True)
     content = db.Column(db.Text, nullable=False)
+    due_date = db.Column(db.DateTime)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, alarm_type, alarm_date, content):
-        self.alarm_type = alarm_type  # Y/M
-        self.alarm_date = alarm_date
-        self.content = content
+    def __init__(self, Alarm):
+        self.alarm_type = Alarm['alarm_type']  # Y/M
+        self.alarm_date = Alarm['alarm_date']
+        self.content = Alarm['content']
+        self.due_date = Alarm['due_date'] if Alarm['due_date'] else None
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -30,6 +32,22 @@ class Alarm(db.Model):
     def queryByConditions(self, date):
         # alarm_date 可能是每個月 26 或 8/26
         return db.engine.execute(f"SELECT * FROM Alarm WHERE alarm_date = '{date}' OR alarm_date LIKE '%{date}'")
+
+    def queryByPeriod(self, start, end):
+        sql = []
+
+        sql.append(
+            f"SELECT *, DATE(due_date, 'localtime') AS due_date FROM Alarm WHERE (DATE(due_date, 'localtime') >= DATE() OR due_date IS NULL) ")
+        sql.append(" AND (alarm_type = 'M' OR (alarm_type = 'Y' AND  ")
+
+        conj = 'OR'
+        if end[4:] > start[4:]:
+            conj = 'AND'
+
+        sql.append(
+            f" substr(alarm_date,0,3) >= substr('{start}',5) {conj} substr(alarm_date,0,3) <= substr('{end}',5)))")
+
+        return db.engine.execute(''.join(sql))
 
     def add(self, alarm):
         db.session.add(alarm)
@@ -58,7 +76,8 @@ class Alarm(db.Model):
             'alarm_id': Alarm.alarm_id,
             'alarm_type': Alarm.alarm_type,
             'alarm_date': Alarm.alarm_date,
-            'content': Alarm.content
+            'content': Alarm.content,
+            'due_date': Alarm.due_date
         }
 
     def output4View(self, Alarm):
