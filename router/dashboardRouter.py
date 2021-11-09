@@ -19,49 +19,10 @@ from router.yearReport.reportRouter import getBalanceSheetByNow
 
 
 def init_dashboard_api(app):
-    @app.route('/dashboard/checkFxRate', methods=['POST'])
-    def importFxRate():
-        datas = []
-
-        try:
-            response = requests.get(
-                'https://openapi.taifex.com.tw/v1/DailyForeignExchangeRates')
-
-            fxRateList = response.json()
-            for rate in fxRateList:
-                date = None
-                usd = None  # 記錄USD/NTD，作為與台幣匯率換算的基礎
-                for key in rate.keys():
-                    if key == 'Date':
-                        date = datetime.strptime(rate[key], "%Y%m%d")
-                    else:
-                        rawRate = rate[key].split('/')
-
-                        if rawRate[1] == 'NTD':
-                            if rawRate[0] == 'USD':
-                                usd = rate[key]
-
-                            datas.append(
-                                {'import_date': date, 'code': rawRate[0], 'buy_rate': rate[key]})
-                        elif rawRate[1] != 'RMB':  # RMB 已有 NTD 匯兌，所以要過濾
-                            if rawRate[0] == 'USD':
-                                datas.append(
-                                    {'import_date': date, 'code': rawRate[1], 'buy_rate': round(usd / rate[key], 2)})
-                            else:
-                                datas.append(
-                                    {'import_date': date, 'code': rawRate[0], 'buy_rate': round(usd * rate[key], 2)})
-
-                result = FXRate.bulkInsert(FXRate, datas)
-
-                if result:
-                    return jsonify(ResponseFormat.true_return(ResponseFormat, None, 'Success'))
-                else:
-                    return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to build fx rate history'))
-        except Exception as error:
-            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
-
     @app.route('/dashboard/summary/<string:type>/<string:period>', methods=['GET'])
     def getSummary(type, period):
+        output = {}
+
         try:
             strFormat = '%Y%m' if type == 'month' else '%Y'
 
@@ -73,14 +34,20 @@ def init_dashboard_api(app):
                 spendings = [item.spending for item in list(groups)]
                 groupedJournalValues.append(
                     {'name': key, 'value': abs(sum(spendings))})  # 取絕對值計算百分比
-            floatValue = [data for data in groupedJournalValues if data.get(
-                'name') == 'Floating'][0]['value']
-            fixValue = [data for data in groupedJournalValues if data.get(
-                'name') == 'Fixed'][0]['value']
-            passiveValue = [data for data in groupedJournalValues if data.get(
-                'name') == 'Passive'][0]['value']
-            IncomeValue = [data for data in groupedJournalValues if data.get(
-                'name') == 'Income'][0]['value']
+
+            if len(groupedJournalValues) > 0:
+                floatValue = [data for data in groupedJournalValues if data.get(
+                    'name') == 'Floating'][0]['value']
+                fixValue = [data for data in groupedJournalValues if data.get(
+                    'name') == 'Fixed'][0]['value']
+                passiveValue = [data for data in groupedJournalValues if data.get(
+                    'name') == 'Passive'][0]['value']
+                IncomeValue = [data for data in groupedJournalValues if data.get(
+                    'name') == 'Income'][0]['value']
+
+                output['spending'] = floatValue+fixValue
+                output['workFreedom'] = round(
+                    (passiveValue/(passiveValue+IncomeValue))*100, 2)
 
             # 取得歷史資料--年度則撈每年12月，共十年，月份直接將 period 帶進去撈12個月
             inputDate = datetime.strptime(period, strFormat)
@@ -136,7 +103,7 @@ def init_dashboard_api(app):
             assetValue = 0
             liabilityValue = 0
             # 取得 period 條件下的資產與負債--如果上面的資料有 period 的資料，那就不用做下面這段
-            if (len(thisPeriodData) == 0):
+            if len(thisPeriodData) == 0:
                 balanceSheetValue = getBalanceSheetByNow()
 
                 for item in balanceSheetValue['assets']:
@@ -160,14 +127,21 @@ def init_dashboard_api(app):
             lastNetAssetValue = groupedAssetValues[len(
                 groupedAssetValues)-2]['value']-groupedDebtValues[len(groupedDebtValues)-2]['value']
 
+            if len(groupedJournalValues) > 0:
+                output.freedom = round(
+                    (thisNetAssetValue/(floatValue+fixValue))*100, 2)
+
+            output['debt'] = liabilityValue
+            output['asset'] = assetValue
+            output['assetBalanceChart'] = groupedAssetValues
+            output['debtBalanceChart'] = groupedDebtValues
+            output['netAssetGrowth'] = round(
+                ((thisNetAssetValue-lastNetAssetValue)/lastNetAssetValue)*100, 2)
+
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
         else:
-            return jsonify(ResponseFormat.true_return(ResponseFormat,  {'spending': floatValue+fixValue, 'debt': liabilityValue, 'asset': assetValue,
-                                                                        'workFreedom': round((passiveValue/(passiveValue+IncomeValue))*100, 2),
-                                                                        'freedom': round((thisNetAssetValue/(floatValue+fixValue))*100, 2),
-                                                                        'assetBalanceChart': groupedAssetValues, 'debtBalanceChart': groupedDebtValues,
-                                                                        'netAssetGrowth': round(((thisNetAssetValue-lastNetAssetValue)/lastNetAssetValue)*100, 2)}))
+            return jsonify(ResponseFormat.true_return(ResponseFormat,  output))
 
     @app.route('/dashboard/budget/<string:type>/<string:period>', methods=['GET'])
     def getBudgetUsed(type, period):
@@ -286,3 +260,46 @@ def init_dashboard_api(app):
                 return jsonify(ResponseFormat.true_return(ResponseFormat, None))
             else:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, '删除失败'))
+
+    @app.route('/dashboard/checkFxRate', methods=['POST'])
+    def importFxRate():
+        datas = []
+
+        try:
+            # 寫法一
+            response = requests.get(
+                'https://openapi.taifex.com.tw/v1/DailyForeignExchangeRates')
+
+            fxRateList = response.json()
+            for rate in fxRateList:
+                date = None
+                usd = None  # 記錄USD/NTD，作為與台幣匯率換算的基礎
+                for key in rate.keys():
+                    if key == 'Date':
+                        date = datetime.strptime(rate[key], "%Y%m%d")
+                    else:
+                        rawRate = key.split('/')
+                        value = float(rate[key])
+
+                        if rawRate[1] == 'NTD':
+                            if rawRate[0] == 'USD':
+                                usd = value
+
+                            datas.append(
+                                {'import_date': date, 'code': rawRate[0], 'buy_rate': value})
+                        elif rawRate[1] != 'RMB':  # RMB 已有 NTD 匯兌，所以要過濾
+                            if rawRate[0] == 'USD':
+                                datas.append(
+                                    {'import_date': date, 'code': rawRate[1], 'buy_rate': round(usd / value, 4)})
+                            else:
+                                datas.append(
+                                    {'import_date': date, 'code': rawRate[0], 'buy_rate': round(usd * value, 4)})
+
+            result = FXRate.bulkInsert(FXRate, datas)
+
+            if result:
+                return jsonify(ResponseFormat.true_return(ResponseFormat, None, 'Success'))
+            else:
+                return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to build fx rate history'))
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))

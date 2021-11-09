@@ -21,13 +21,17 @@ class FXRate(db.Model):
     def __str__(self):
         return self
 
+    def queryByKey(self, import_date, code):
+        return self.query.filter_by(import_date=import_date, code=code).first()
+
     def bulkInsert(self, datas):
         sql = 'INSERT INTO FX_Rate(import_date, code, buy_rate) VALUES(:1, :2, :3)'
 
         params = []
         try:
             for item in datas:
-                params.append((item.import_date, item.code, item.buy_rate))
+                params.append((item['import_date'],
+                               item['code'], item['buy_rate']))
 
             db.engine.execute(sql, params)
             return True
