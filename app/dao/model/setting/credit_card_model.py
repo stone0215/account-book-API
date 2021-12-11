@@ -15,6 +15,7 @@ class CreditCard(db.Model):
     fx_code = db.Column(db.String(3), nullable=False)
     in_use = db.Column(db.String(1), nullable=False, index=True)
     credit_card_index = db.Column(db.SmallInteger)
+    carrier_no = db.Column(db.String(60))
     note = db.Column(db.Text)
 
     # 物件建立之後所要建立的初始化動作
@@ -28,6 +29,7 @@ class CreditCard(db.Model):
         self.fx_code = CreditCard["fx_code"]
         self.in_use = CreditCard["in_use"]  # Y/M
         self.credit_card_index = CreditCard["credit_card_index"] or ''
+        self.carrier_no = CreditCard["carrier_no"] or None
         self.note = CreditCard["note"]
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
@@ -73,6 +75,17 @@ class CreditCard(db.Model):
         sql.append(" ORDER BY credit_card_id ASC")
 
         return db.engine.execute(''.join(sql))
+
+    def queryByCarrierNo(self, carrier_no):
+        sql = []
+        sql.append(
+            f"SELECT 'Account' AS table_name, id, account_type AS type, carrier_no FROM Account WHERE carrier_no = '{carrier_no}' ")
+        sql.append(
+            "UNION ALL ")
+        sql.append(
+            f"SELECT 'Credit_Card' AS table_name, credit_card_id AS id, 'undefined' AS type, carrier_no FROM Credit_Card WHERE carrier_no = '{carrier_no}' ")
+
+        return db.engine.execute(''.join(sql)).fetchone()
 
     def add(self, credit_card):
         db.session.add(credit_card)

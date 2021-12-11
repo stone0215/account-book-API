@@ -17,16 +17,13 @@ from .otherAssetAndLiabilities.stockAssetRouter import init_stock_asset_api
 from .utilRouter import init_util_api
 from .yearReport.reportRouter import init_report_api
 from .dashboardRouter import init_dashboard_api
+from .globalRouter import init_global_api
 
 
 def init(app):
     @app.route('/')
     def index():
         return jsonify(ResponseFormat.true_return(ResponseFormat, 'Hello Flask!'))
-
-    @app.route('/global/server-alive')
-    def serverAlive():
-        return jsonify(ResponseFormat.true_return(ResponseFormat, True))
 
     init_account_api(app)
     init_alarm_api(app)
@@ -43,3 +40,4 @@ def init(app):
     init_journal_api(app)
     init_report_api(app)
     init_dashboard_api(app)
+    init_global_api(app)

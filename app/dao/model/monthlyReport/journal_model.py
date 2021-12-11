@@ -20,6 +20,7 @@ class Journal(db.Model):
     action_sub_type = db.Column(db.String(20), nullable=False)
     action_sub_table = db.Column(db.String(10), nullable=False)
     spending = db.Column(db.Float, nullable=False)
+    invoice_number = db.Column(db.String(10))
     note = db.Column(db.Text)
 
     # 物件建立之後所要建立的初始化動作
@@ -36,6 +37,7 @@ class Journal(db.Model):
         self.action_sub_type = Journal['action_sub_type']
         self.action_sub_table = Journal['action_sub_table']
         self.spending = Journal['spending']
+        self.invoice_number = Journal['invoice_number'] if Journal['invoice_number'] else None
         self.note = Journal['note'] if Journal['note'] else None
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
@@ -47,6 +49,9 @@ class Journal(db.Model):
 
     def queryByVestingMonth(self, vesting_month):
         return self.query.filter_by(vesting_month=vesting_month).order_by(asc(self.spend_date)).all()
+
+    def queryByVestingMonthAndInvoice(self, vesting_month, invoice_number):
+        return self.query.filter_by(vesting_month=vesting_month, invoice_number=invoice_number).first()
 
     def queryEstateOrLiabilityRecord(self, vestingMonth):
         sql = []
@@ -188,6 +193,23 @@ class Journal(db.Model):
         if DaoBase.session_commit(self) == '':
             return journal
         else:
+            return False
+
+    def bulkInsert(self, datas):
+        sql = 'INSERT INTO Journal(vesting_month, spend_date, spend_way, spend_way_type, spend_way_table, action_main, action_main_type, action_main_table, action_sub, action_sub_type, action_sub_table, spending, invoice_number, note) VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14)'
+
+        params = []
+        try:
+            for item in datas:
+                params.append((item.vesting_month,
+                               item.spend_date, item.spend_way, item.spend_way_type, item.spend_way_table,
+                               item.action_main, item.action_main_type, item.action_main_table,
+                               item.action_sub, item.action_sub_type, item.action_sub_table, item.spending,
+                               item.invoice_number, item.note))
+
+            db.engine.execute(sql, params)
+            return True
+        except Exception as error:
             return False
 
     def update(self):

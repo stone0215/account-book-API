@@ -65,6 +65,7 @@ def init_credit_card_api(app):
                 credit_card.in_use = inputData['in_use']
                 credit_card.credit_card_index = inputData['credit_card_index']
                 credit_card.note = inputData['note']
+                credit_card.note = inputData['carrier_no']
                 if CreditCard.update(CreditCard):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))
                 else:

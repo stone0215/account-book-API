@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS Account (
 	discount DECIMAL(4,3), -- 最多總共四位，小數點三位
 	memo NVARCHAR(300), -- 活存利率等
 	owner NVARCHAR(60),
+	carrier_no NVARCHAR(60),
 	account_index TINYINT
 );
 
@@ -79,6 +80,7 @@ CREATE TABLE IF NOT EXISTS Credit_Card (
 	fx_code CHARACTER(3) NOT NULL, -- 對應 FX_Rate.code
 	in_use CHARACTER(1) NOT NULL,
 	credit_card_index TINYINT,
+	carrier_no NVARCHAR(60),
     note TEXT -- 記錄額度，優惠到期日，回饋上限金額之類的
 );
 
@@ -216,6 +218,7 @@ CREATE TABLE IF NOT EXISTS Journal (
 	action_sub_table VARCHAR(15) NOT NULL, -- id 對應的 table
 	-- action_sub_name NVARCHAR(60) NOT NULL,
     spending DECIMAL(9,2) NOT NULL, -- 收入為正，支出為負
+	invoice_number CHAR(10), -- 有填發票號碼為匯入資料，用來判斷是否要寫入新的匯入資料
     note TEXT
 );
 CREATE INDEX IF NOT EXISTS Journal_spend_date_idx ON Journal (spend_date);
