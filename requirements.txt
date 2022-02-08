@@ -4,3 +4,4 @@ flask_sqlalchemy
 pylint-flask
 requests
 python-dateutil
+yfinance

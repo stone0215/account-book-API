@@ -267,21 +267,12 @@ CREATE TABLE IF NOT EXISTS Other_Asset (
     asset_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	asset_name NVARCHAR(60) NOT NULL,
 	asset_type VARCHAR(10) NOT NULL,
+	vesting_nation VARCHAR(10),
 	in_use CHARACTER(1) NOT NULL,
 	asset_index TINYINT
 );
 
--- 歷史每月淨值檔，關帳後寫入
--- CREATE TABLE IF NOT EXISTS Other_Asset_Net_Value_History (
--- 	vesting_month CHARACTER(6) NOT NULL,
--- 	id INTEGER,
--- 	name NVARCHAR(60) NOT NULL,
--- 	asset_type VARCHAR(10) NOT NULL,
---     -- net_value DECIMAL(9,2) NOT NULL, 由各資產歷史淨值檔計算
--- 	PRIMARY KEY (vesting_month, id, asset_type)
--- );
-
--- 股票流水帳檔
+-- 股票流水帳檔 (尚未賣出都可以做在同一包)
 CREATE TABLE IF NOT EXISTS Stock_Journal (
 	stock_id INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	stock_code VARCHAR(10) NOT NULL,
@@ -322,13 +313,13 @@ CREATE TABLE IF NOT EXISTS Stock_Net_Value_History (
 -- 股票歷史價格檔
 CREATE TABLE IF NOT EXISTS Stock_Price_History (
 	stock_code VARCHAR(10) NOT NULL,
-	fetch_date DATE NOT NULL,
+	fetch_date DATETIME NOT NULL,
 	open_price DECIMAL(7,3),
 	highest_price DECIMAL(7,3),
 	lowest_price DECIMAL(7,3),
-	close_price DECIMAL(7,3) NOT NULL
+	close_price DECIMAL(7,3) NOT NULL,
+	PRIMARY KEY (stock_code, fetch_date)
 );
-CREATE INDEX IF NOT EXISTS Stock_Price_History_idx ON Stock_Price_History (stock_code, fetch_date);
 
 -- 年度目標設定檔
 CREATE TABLE IF NOT EXISTS Target_Setting (

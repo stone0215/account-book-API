@@ -1,12 +1,10 @@
-from sqlalchemy import asc
-
 from ...dao_base import DaoBase
 
 db = DaoBase().getDB()
 
 
 class FXRate(db.Model):
-    __tablename__ = 'FX_Rate'
+    __tablename__ = "FX_Rate"
     import_date = db.Column(db.DateTime, primary_key=True)
     code = db.Column(db.String(3), primary_key=True)
     buy_rate = db.Column(db.Float, nullable=False)  # 銀行向你買回的價格
@@ -22,27 +20,26 @@ class FXRate(db.Model):
         return self
 
     def queryByKey(self, import_date, code):
-        return self.query.filter_by(import_date=import_date, code=code).first()
+        sql = f"SELECT COUNT(*) as recordNum FROM FX_Rate WHERE import_date='{import_date}' AND code='{code}'"
+
+        try:
+            return db.engine.execute(sql).fetchone()
+        except Exception as error:
+            return None
 
     def bulkInsert(self, datas):
-        sql = 'INSERT INTO FX_Rate(import_date, code, buy_rate) VALUES(:1, :2, :3)'
+        sql = "INSERT INTO FX_Rate(import_date, code, buy_rate) VALUES(:1, :2, :3)"
 
         params = []
         try:
             for item in datas:
-                params.append((item['import_date'],
-                               item['code'], item['buy_rate']))
+                params.append(
+                    (item["import_date"], item["code"], item["buy_rate"]))
 
             db.engine.execute(sql, params)
+            # with db.engine.connect() as conn:
+            #     result = conn.execute(sql, params)
+            #     print('123', result)
             return True
         except Exception as error:
             return False
-
-    def output(self, asset):
-        return {
-            'asset_id': asset.asset_id,
-            'import_date': asset.import_date,
-            'id': asset.id,
-            'name': asset.name,
-            'asset_id': asset.asset_id
-        }

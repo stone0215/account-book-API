@@ -10,15 +10,17 @@ class OtherAsset(db.Model):
     asset_id = db.Column(db.Integer, primary_key=True)
     asset_name = db.Column(db.String(60), nullable=False)
     asset_type = db.Column(db.String(10), nullable=False)
+    vesting_nation = db.Column(db.String(10))
     in_use = db.Column(db.String(1), nullable=False)
     asset_index = db.Column(db.SmallInteger, index=True)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, asset_name, asset_type, in_use, asset_index):
-        self.asset_name = asset_name
-        self.asset_type = asset_type
-        self.in_use = in_use  # Y/M
-        self.asset_index = asset_index or ''
+    def __init__(self, OtherAsset):
+        self.asset_name = OtherAsset['asset_name']
+        self.asset_type = OtherAsset['asset_type']
+        self.vesting_nation = OtherAsset['vesting_nation']
+        self.in_use = OtherAsset['in_use']  # Y/M
+        self.asset_index = OtherAsset['asset_index'] or ''
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -109,6 +111,7 @@ class OtherAsset(db.Model):
             'asset_id': asset.asset_id,
             'asset_name': asset.asset_name,
             'asset_type': asset.asset_type,
+            'vesting_nation': asset.vesting_nation,
             'in_use': asset.in_use,
             'asset_index': asset.asset_index
         }

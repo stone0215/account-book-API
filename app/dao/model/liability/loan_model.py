@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from sqlalchemy import asc
 import json
 
@@ -51,18 +51,18 @@ class Loan(db.Model):
             "SELECT loan_main.loan_id, loan_name, loan_type, apply_date, grace_expire_date, amount, ")
         sql.append("amount-IFNULL(principal_payed,0) AS remaining, ")
         sql.append(
-            "IFNULL(principal_payed+interest_payed,0) AS total_payed, repayed ")
+            "IFNULL(principal_payed,0)+IFNULL(fee_payed,0) AS total_payed, repayed ")
         sql.append("FROM Loan Loan_Main ")
         sql.append(
-            "LEFT JOIN (SELECT loan_id, SUM(IFNULL(excute_price,0)) AS principal_payed ")
+            "LEFT JOIN (SELECT loan_id, IFNULL(SUM(excute_price),0) AS principal_payed ")
         sql.append(
             "    FROM Loan_Journal WHERE loan_excute_type = 'principal') Loan_Payed ")
         sql.append(
             "    ON Loan_Payed.loan_id=Loan_Main.loan_id ")
         sql.append(
-            "LEFT JOIN (SELECT loan_id, SUM(IFNULL(excute_price,0)) AS interest_payed ")
+            "LEFT JOIN (SELECT loan_id, IFNULL(SUM(excute_price),0) AS fee_payed ")
         sql.append(
-            "    FROM Loan_Journal WHERE loan_excute_type = 'interest') Loan_Interest ")
+            "    FROM Loan_Journal WHERE loan_excute_type = 'interest' OR loan_excute_type = 'fee') Loan_Interest ")
         sql.append(
             "    ON Loan_Interest.loan_id=Loan_Main.loan_id ")
         sql.append(" ORDER BY Loan_Main.loan_id ASC")

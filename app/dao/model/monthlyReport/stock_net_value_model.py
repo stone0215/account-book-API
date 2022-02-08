@@ -15,6 +15,7 @@ class StockNetValueHistory(db.Model):
     amount = db.Column(db.SmallInteger, nullable=False)
     price = db.Column(db.Float, nullable=False)
     cost = db.Column(db.Float, nullable=False)
+    fx_code = db.Column(db.String(3), nullable=False)
     fx_rate = db.Column(db.Float, nullable=False)
 
     # 物件建立之後所要建立的初始化動作
@@ -27,6 +28,7 @@ class StockNetValueHistory(db.Model):
         self.amount = StockNetValueHistory.amount
         self.price = StockNetValueHistory.price
         self.cost = StockNetValueHistory.cost
+        self.fx_code = StockNetValueHistory.fx_code
         self.fx_rate = StockNetValueHistory.fx_rate
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段

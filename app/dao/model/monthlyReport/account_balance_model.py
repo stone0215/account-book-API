@@ -33,13 +33,13 @@ class AccountBalance(db.Model):
         return self.query.filter_by(vesting_month=vesting_month).all()
 
     def bulkInsert(self, datas):
-        sql = 'INSERT INTO Account_Balance(vesting_month, id, name, balance, fx_rate, is_calculate) VALUES(:1, :2, :3, :4, :5, :6)'
+        sql = 'INSERT INTO Account_Balance(vesting_month, id, name, balance, fx_code, fx_rate, is_calculate) VALUES(:1, :2, :3, :4, :5, :6, :7)'
 
         params = []
         try:
             for item in datas:
                 params.append((item.vesting_month, item.id,
-                               item.name, item.balance, item.fx_rate, item.is_calculate))
+                               item.name, item.balance, item.fx_code, item.fx_rate, item.is_calculate))
 
             db.engine.execute(sql, params)
             return True
@@ -61,18 +61,19 @@ class AccountBalance(db.Model):
             obj.vesting_month = vestingMonth
             for journal in journals:
                 # 處理扣項金額
-                if journal.spend_way_table == 'Account' and obj.id == int(journal.spend_way):
-                    obj.balance += journal.spending
+                if journal['spend_way_table'] == 'Account' and obj.id == int(journal['spend_way']):
+                    obj.balance += journal['spending']
 
                 # 處理加項金額
-                if journal.action_sub_table == 'Account' and obj.id == int(journal.action_sub):
-                    if journal.spend_way_type == 'normal' and journal.action_sub_type == 'finance':
-                        obj.balance -= round(journal.spending /
-                                             int(journal.note), 2)
-                    elif journal.spend_way_type == 'finance' and journal.action_sub_type == 'normal':
-                        obj.balance -= journal.spending*int(journal.note)
+                if journal['action_sub_table'] == 'Account' and obj.id == int(journal['action_sub']):
+                    if journal['spend_way_type'] == 'normal' and journal['action_sub_type'] == 'finance':
+                        obj.balance -= round(journal['spending'] /
+                                             float(journal['note']), 2)
+                    elif journal['spend_way_type'] == 'finance' and journal['action_sub_type'] == 'normal':
+                        obj.balance -= journal['spending'] * \
+                            float(journal['note'])
                     else:
-                        obj.balance -= journal.spending
+                        obj.balance -= journal['spending']
 
             accountArray.append(obj)
 

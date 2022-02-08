@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from sqlalchemy import asc
 
 from ...dao_base import DaoBase
@@ -48,7 +49,17 @@ class Journal(db.Model):
         return self.query.filter_by(distinct_number=distinct_number).first()
 
     def queryByVestingMonth(self, vesting_month):
-        return self.query.filter_by(vesting_month=vesting_month).order_by(asc(self.spend_date)).all()
+        sql = []
+        sql.append(
+            "SELECT Journal.*, fx_code, IFNULL(buy_rate,1) AS fx_rate FROM Journal ")
+        sql.append("LEFT JOIN Account ON id=spend_way ")
+        sql.append("LEFT JOIN FX_Rate ON code=fx_code AND ")
+        sql.append(
+            f"import_date=(SELECT MAX(import_date) FROM FX_Rate WHERE STRFTIME('%Y%m', import_date) = '{vesting_month}' )")
+        sql.append(
+            f"WHERE vesting_month = '{vesting_month}' ORDER BY spend_date")
+
+        return db.engine.execute(''.join(sql))
 
     def queryByVestingMonthAndInvoice(self, vesting_month, invoice_number):
         return self.query.filter_by(vesting_month=vesting_month, invoice_number=invoice_number).first()
@@ -67,9 +78,19 @@ class Journal(db.Model):
         return db.engine.execute(''.join(sql))
 
     def queryForExpenditureRatio(self, vestingMonth, sortColumn):
+        inputDate = datetime.strptime(vestingMonth, '%Y%m')
+        inputDateTime = datetime(
+            inputDate.year, inputDate.month+1, 1, 23, 59, 59)-timedelta(days=1)
         sql = []
-        sql.append("SELECT *, name AS action_main_name FROM Journal ")
+        sql.append(
+            "SELECT *, name AS action_main_name, spending*IFNULL(fx_rate,1) AS spending FROM Journal ")
         sql.append(" LEFT JOIN Code_Data ON code_id=action_main ")
+        sql.append(
+            " LEFT JOIN (SELECT id, fx_code FROM Account) Account ON Account.id=Journal.spend_way ")
+        sql.append(
+            " LEFT JOIN (SELECT code, buy_rate AS fx_rate, MAX(import_date) FROM FX_Rate ")
+        sql.append(
+            f" WHERE import_date <= '{inputDateTime}' GROUP BY code) Rate ON Rate.code = Account.fx_code ")
         sql.append(
             f" WHERE vesting_month = '{vestingMonth}' AND action_main_table='Code' ")
         sql.append(f" ORDER BY {sortColumn} ASC ")
@@ -80,9 +101,11 @@ class Journal(db.Model):
         sql = []
         # 賣出外幣
         sql.append(
-            "SELECT '賣出' AS action, '換匯' AS target, spending*note*-1 AS spending FROM Journal ")
+            "SELECT '賣出' AS action, '換匯' AS target,  ABS(CASE WHEN spend_way_type='finance' THEN spending*note ELSE spending END) AS spending FROM Journal ")
         sql.append(
-            f"WHERE vesting_month = '{vestingMonth}' AND spend_way_type='finance' AND action_sub_type='normal' ")
+            f"WHERE vesting_month = '{vestingMonth}' AND ((spend_way_type='finance' AND action_sub_type='normal' AND spending < 0 ) ")
+        sql.append(
+            "OR (spend_way_type='normal' AND action_sub_type='finance' AND spending > 0 )) ")
         # 賣出股票
         sql.append(
             " UNION ALL SELECT '賣出' AS action, '股票' AS target, excute_price*IFNULL(fx_rate,1) AS spending ")
@@ -114,12 +137,14 @@ class Journal(db.Model):
             f"WHERE STRFTIME('%Y%m', excute_date) = '{vestingMonth}' AND estate_excute_type='sold' ")
         # 買入外幣
         sql.append(
-            " UNION ALL SELECT '買入' AS action, '換匯' AS target, spending*-1 FROM Journal ")
+            " UNION ALL SELECT '買入' AS action, '換匯' AS target, ABS(CASE WHEN spend_way_type='finance' THEN spending*note ELSE spending END) AS spending FROM Journal ")
         sql.append(
-            f"WHERE vesting_month = '{vestingMonth}' AND spend_way_type='normal' AND action_sub_type='finance' ")
+            f"WHERE vesting_month = '{vestingMonth}' AND ((spend_way_type='finance' AND action_sub_type='normal' AND spending > 0 ) ")
+        sql.append(
+            "OR (spend_way_type='normal' AND action_sub_type='finance' AND spending < 0 )) ")
         # 買入股票
         sql.append(
-            " UNION ALL SELECT '買入' AS action, '股票' AS target, excute_price*IFNULL(fx_rate,1) AS spending ")
+            " UNION ALL SELECT '買入' AS action, '股票' AS target, ABS(excute_price*IFNULL(fx_rate,1)) AS spending ")
         sql.append(
             " FROM Stock_Detail AS Stock LEFT JOIN (SELECT id, fx_code FROM Account) Account ON Account.id=Stock.account_id ")
         sql.append(
@@ -159,11 +184,17 @@ class Journal(db.Model):
     def queryForSpendingReport(self, start, end, format):
         sql = []
         sql.append(
-            f"SELECT STRFTIME('{format}', spend_date) AS dateString, spend_way_type, action_main_type, spending, note, name FROM Journal ")
+            f"SELECT STRFTIME('{format}', spend_date) AS dateString, spend_way_type, action_main_type, spending*IFNULL(fx_rate,1) AS spending, note, name FROM Journal ")
         sql.append(" LEFT JOIN Code_Data ON code_id=action_main ")
         sql.append(
+            " LEFT JOIN (SELECT id, fx_code FROM Account) Account ON Account.id=Journal.spend_way ")
+        sql.append(
+            " LEFT JOIN (SELECT code, buy_rate AS fx_rate, MAX(import_date) FROM FX_Rate ")
+        sql.append(
+            f" WHERE STRFTIME('{format}', import_date) >= '{start}' AND STRFTIME('{format}', import_date) <= '{end}' GROUP BY code) Rate ON Rate.code = Account.fx_code ")
+        sql.append(
             f" WHERE action_main_table='Code' AND STRFTIME('{format}', spend_date) >= '{start}' AND STRFTIME('{format}', spend_date) <= '{end}' ")
-        sql.append(" ORDER BY dateString ASC ")
+        sql.append(" ORDER BY dateString, action_main_type ASC ")
 
         return db.engine.execute(''.join(sql))
 

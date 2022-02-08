@@ -33,8 +33,7 @@ def init_journal_api(app):
             journals = Journal.queryByVestingMonth(Journal, vestingMonth)
             for journal in journals:
                 if journal.action_main_table == 'Code':
-                    gainLoss += (round(journal.spending * int(journal.note), 2)
-                                 if journal.spend_way_type == 'finance' else journal.spending)
+                    gainLoss += round(journal.spending * journal.fx_rate, 2)
 
                 journalList.append(Journal.output(Journal, journal))
         except Exception as error:
@@ -151,17 +150,29 @@ def init_journal_api(app):
             AccountBalance.delete(AccountBalance, vestingMonth)
             CreditCardBalance.delete(CreditCardBalance, vestingMonth)
             journals = Journal.queryByVestingMonth(Journal, vestingMonth)
-            journals.sort(key=lambda item: (
-                item.spend_way_table, item.spend_way))
+            journalList = []
+            for journal in journals:
+                journalList.append({
+                    'spend_way_table': journal.spend_way_table,
+                    'spend_way': journal.spend_way,
+                    'spending': journal.spending,
+                    'action_sub_table': journal.action_sub_table,
+                    'action_sub': journal.action_sub,
+                    'spend_way_type': journal.spend_way_type,
+                    'action_sub_type': journal.action_sub_type,
+                    'note': journal.note
+                })
+            journalList.sort(key=lambda item: (
+                item['spend_way_table'], item['spend_way']))
             accounts = Account.query4Summary(Account, lastMonth, vestingMonth)
             cards = CreditCard.query4Summary(
                 CreditCard, lastMonth, vestingMonth)
 
             accountArray = AccountBalance.culculateBalance(
-                AccountBalance, vestingMonth, journals, accounts)
+                AccountBalance, vestingMonth, journalList, accounts)
 
             cardArray = CreditCardBalance.culculateBalance(
-                CreditCardBalance, vestingMonth, journals, cards)
+                CreditCardBalance, vestingMonth, journalList, cards)
 
             result = False
             if (len(accountArray) > 0):
@@ -190,7 +201,7 @@ def init_journal_api(app):
             for key, groups in groupby(journals, lambda item: item.action_main_type):
                 spendings = [item.spending for item in list(groups)]
                 expendingInnerPie.append(
-                    {'name': key, 'value': abs(sum(spendings))})  # 取絕對值計算百分比
+                    {'name': key, 'value': abs(round(sum(spendings), 2))})  # 取絕對值計算百分比
 
             # 不確定是因為 groupby 後 journals 被清空還是什麼原因導致資料表被釋放，所以需要重撈，之後可以考慮改 panda
             journals = Journal.queryForExpenditureRatio(
@@ -200,7 +211,7 @@ def init_journal_api(app):
                 spendings = [item.spending for item in list(groups)]
                 expendingOuterPie.append({'name': key[1],
                                           'type': key[2],
-                                          'value': sum(spendings)})
+                                          'value': abs(round(sum(spendings), 2))})
 
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
@@ -218,7 +229,7 @@ def init_journal_api(app):
                 spendings = [item.spending for item in list(groups)]
                 assetOuterPie.append({'name': key[1],
                                       'type': key[0],
-                                      'value': sum(spendings)})
+                                      'value': round(sum(spendings), 2)})
 
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))

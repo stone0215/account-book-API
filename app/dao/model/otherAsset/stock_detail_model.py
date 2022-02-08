@@ -6,7 +6,7 @@ db = DaoBase().getDB()
 
 
 class StockDetail(db.Model):
-    __tablename__ = 'Stock_Detail'
+    __tablename__ = "Stock_Detail"
     distinct_number = db.Column(db.Integer, primary_key=True)
     stock_id = db.Column(db.Integer, nullable=False, index=True)
     excute_type = db.Column(db.String(10), nullable=False)
@@ -19,14 +19,18 @@ class StockDetail(db.Model):
 
     # 物件建立之後所要建立的初始化動作
     def __init__(self, StockDetail):
-        self.stock_id = StockDetail['stock_id']
-        self.excute_type = StockDetail['excute_type']
-        self.excute_amount = StockDetail['excute_amount'] if StockDetail['excute_amount'] else None
-        self.excute_price = StockDetail['excute_price'] if StockDetail['excute_price'] else None
-        self.excute_date = StockDetail['excute_date']
-        self.account_id = StockDetail['account_id']
-        self.account_name = StockDetail['account_name']
-        self.memo = StockDetail['memo'] if StockDetail['memo'] else None
+        self.stock_id = StockDetail["stock_id"]
+        self.excute_type = StockDetail["excute_type"]
+        self.excute_amount = (
+            StockDetail["excute_amount"] if StockDetail["excute_amount"] else None
+        )
+        self.excute_price = (
+            StockDetail["excute_price"] if StockDetail["excute_price"] else 0
+        )
+        self.excute_date = StockDetail["excute_date"]
+        self.account_id = StockDetail["account_id"]
+        self.account_name = StockDetail["account_name"]
+        self.memo = StockDetail["memo"] if StockDetail["memo"] else None
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
 
@@ -46,33 +50,33 @@ class StockDetail(db.Model):
         db.session.add(stock_asset)
         db.session.flush()
 
-        if DaoBase.session_commit(self) == '':
+        if DaoBase.session_commit(self) == "":
             return stock_asset
         else:
             return False
 
     def update(self):
-        if DaoBase.session_commit(self) == '':
+        if DaoBase.session_commit(self) == "":
             return True
         else:
             return False
 
     def delete(self, distinct_number):
         self.query.filter_by(distinct_number=distinct_number).delete()
-        if DaoBase.session_commit(self) == '':
+        if DaoBase.session_commit(self) == "":
             return True
         else:
             return False
 
     def output(self, asset):
         return {
-            'distinct_number': asset.distinct_number,
-            'stock_id': asset.stock_id,
-            'excute_type': asset.excute_type,
-            'excute_amount': asset.excute_amount,
-            'excute_price': asset.excute_price,
-            'excute_date': asset.excute_date,
-            'account_id': asset.account_id,
-            'account_name': asset.account_name,
-            'memo': asset.memo
+            "distinct_number": asset.distinct_number,
+            "stock_id": asset.stock_id,
+            "excute_type": asset.excute_type,
+            "excute_amount": asset.excute_amount,
+            "excute_price": asset.excute_price,
+            "excute_date": asset.excute_date,
+            "account_id": asset.account_id,
+            "account_name": asset.account_name,
+            "memo": asset.memo,
         }

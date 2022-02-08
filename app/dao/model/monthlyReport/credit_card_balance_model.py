@@ -35,7 +35,7 @@ class CreditCardBalance(db.Model):
 
         sql = []
         sql.append(
-            "SELECT '信用卡' AS type, card_name AS name, spending, payment AS payment, (IFNULL(balance,0)+IFNULL(spending,0)-IFNULL(payment,0)) AS balance FROM Credit_Card ")
+            "SELECT '信用卡' AS type, card_name AS name, spending, payment AS payment, (IFNULL(balance,0)-IFNULL(spending,0)+IFNULL(payment,0)) AS balance FROM Credit_Card ")
         sql.append(
             f"LEFT JOIN (SELECT id, balance FROM Credit_Card_Balance WHERE vesting_month='{lastMonth}') AS Balance ON Balance.id=credit_card_id ")
         sql.append(
@@ -49,7 +49,7 @@ class CreditCardBalance(db.Model):
         sql.append(
             "WHERE in_use='Y' AND (IFNULL(balance,0) != 0 OR IFNULL(spending,0) != 0 OR IFNULL(payment,0) != 0) ")
         sql.append(
-            "UNION ALL SELECT '貸款' AS type, loan_name AS name, spending, payment, IFNULL(balance,0)+IFNULL(spending,0)+IFNULL(payment,0) AS balance FROM Loan ")
+            "UNION ALL SELECT '貸款' AS type, loan_name AS name, spending, payment, IFNULL(balance, amount)+IFNULL(spending,0)+IFNULL(payment,0) AS balance FROM Loan ")
         sql.append(
             f"LEFT JOIN (SELECT id, balance FROM Loan_Balance WHERE vesting_month='{lastMonth}') AS Balance ON Balance.id=Loan.loan_id ")
         sql.append(
@@ -95,11 +95,11 @@ class CreditCardBalance(db.Model):
             obj.vesting_month = vestingMonth
             for journal in journals:
                 # 處理扣項金額
-                if journal.spend_way_table == 'Credit_Card' and obj.id == int(journal.spend_way):
-                    obj.balance += journal.spending
+                if journal['spend_way_table'] == 'Credit_Card' and obj.id == int(journal['spend_way']):
+                    obj.balance -= journal['spending']
                 # 處理加項金額
-                elif journal.action_sub_table == 'Credit_Card' and obj.id == int(journal.action_sub):
-                    obj.balance -= journal.spending
+                elif journal['action_sub_table'] == 'Credit_Card' and obj.id == int(journal['action_sub']):
+                    obj.balance += journal['spending']
 
             cardArray.append(obj)
 
@@ -109,9 +109,9 @@ class CreditCardBalance(db.Model):
         return {
             'type': liability.type,
             'name': liability.name,
-            'spending':  abs(liability.spending) if liability.spending else None,
+            'spending':  liability.spending*-1 if liability.spending else None,
             'payment':  abs(liability.payment) if liability.payment else None,
-            'balance':  abs(liability.balance)
+            'balance':  liability.balance
         }
 
     def outputForBalanceSheet(self, cards):
