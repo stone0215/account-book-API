@@ -27,9 +27,9 @@ class Account(db.Model):
         self.is_calculate = Account['is_calculate']
         self.in_use = Account['in_use']  # Y/M
         self.discount = Account['discount'] or None
-        self.memo = Account['memo'] or None
+        self.memo = Account['memo'] if 'memo' in Account else None
         self.owner = Account['owner'] or None
-        self.carrier_no = Account['carrier_no'] or None
+        self.carrier_no = Account['carrier_no'] if 'carrier_no' in Account else None
         self.account_index = Account['account_index'] or None
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
@@ -53,7 +53,7 @@ class Account(db.Model):
         if conditions.get('in_use') != '':
             sql.append(f" AND in_use = '{conditions.get('in_use')}'")
 
-        sql.append(" ORDER BY account_index ASC")
+        sql.append(" ORDER BY account_type ASC")
 
         return db.engine.execute(''.join(sql))
 
@@ -65,9 +65,13 @@ class Account(db.Model):
         sql.append(
             "SELECT '' AS vesting_month, Account.id, Account.name, IFNULL(balance,0) AS balance, Account.fx_code, IFNULL(buy_rate,1) AS fx_rate, Account.is_calculate ")
         sql.append(
-            f" FROM Account LEFT JOIN Account_Balance Balance ON Balance.vesting_month = '{lastMonth}' AND Balance.id=Account.id ")
+            " FROM Account LEFT JOIN Account_Balance Balance ON Balance.vesting_month = ")
+        if lastMonth != '':
+            sql.append(f" '{lastMonth}' ")
+        else:
+            sql.append(" (SELECT MAX(vesting_month) FROM Account_Balance) ")
         sql.append(
-            " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
+            " AND Balance.id=Account.id LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
         sql.append(
             f" WHERE STRFTIME('%Y%m', import_date) = '{vestingMonth}' GROUP BY code) Rate ON Rate.code = Account.fx_code ")
 

@@ -66,9 +66,13 @@ class CreditCard(db.Model):
         sql.append(
             "SELECT '' AS vesting_month, credit_card_id AS id, card_name AS name, IFNULL(balance,0) AS balance, IFNULL(buy_rate,1) AS fx_rate FROM Credit_Card ")
         sql.append(
-            f" LEFT JOIN Credit_Card_Balance Balance ON Balance.vesting_month = '{lastMonth}' AND Balance.id=Credit_Card.credit_card_id ")
+            f" LEFT JOIN Credit_Card_Balance Balance ON Balance.vesting_month =  ")
+        if lastMonth != '':
+            sql.append(f" '{lastMonth}' ")
+        else:
+            sql.append(" (SELECT MAX(vesting_month) FROM Credit_Card_Balance) ")
         sql.append(
-            " LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
+            " AND Balance.id=Credit_Card.credit_card_id LEFT JOIN (SELECT code, buy_rate, MAX(import_date) FROM FX_Rate ")
         sql.append(
             f" WHERE STRFTIME('%Y%m', import_date) = '{vestingMonth}' GROUP BY code) Rate ON Rate.code = Credit_Card.fx_code ")
 

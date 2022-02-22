@@ -62,6 +62,8 @@ class AccountBalance(db.Model):
             for journal in journals:
                 # 處理扣項金額
                 if journal['spend_way_table'] == 'Account' and obj.id == int(journal['spend_way']):
+                    print(
+                        journal['spending'], obj.balance) if journal['spend_way'] == '20' else None
                     obj.balance += journal['spending']
 
                 # 處理加項金額
@@ -88,7 +90,7 @@ class AccountBalance(db.Model):
         return {
             'type': '流動資產',
             'name': '現金',
-            'amount': amount
+            'amount': round(amount, 2)
         }
 
     def outputForReport(self, account):

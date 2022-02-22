@@ -56,7 +56,7 @@ class EstateNetValueHistory(db.Model):
         return {
             'type': '固定資產',
             'name': '不動產',
-            'amount': amount
+            'amount': round(amount, 2)
         }
 
     def outputForReport(self, estate):

@@ -58,7 +58,7 @@ class InsuranceNetValueHistory(db.Model):
         return {
             'type': '固定資產',
             'name': '儲蓄險',
-            'amount': amount
+            'amount': round(amount, 2)
         }
 
     def outputForReport(self, insurance):

@@ -66,7 +66,7 @@ def init_report_api(app):
             output = []
             # 取得現金資產
             journals = Journal.queryByVestingMonth(Journal, thisMonth)
-            accounts = Account.query4Summary(Account, lastMonth, thisMonth)
+            accounts = Account.query4Summary(Account, '', thisMonth)
             accountArray = AccountBalance.culculateBalance(
                 AccountBalance, thisMonth, journals, accounts)
             for account in accountArray:
@@ -106,9 +106,12 @@ def getBalanceSheetByNow():
                      timedelta(days=1)).strftime("%Y%m")
 
         journals = Journal.queryByVestingMonth(Journal, thisMonth)
-        journals.sort(key=lambda item: (
-            item.spend_way_table, item.spend_way))
-        accounts = Account.query4Summary(Account, lastMonth, thisMonth)
+        if journals.rowcount == -1:
+            journals = []
+        else:
+            journals.sort(key=lambda item: (
+                item.spend_way_table, item.spend_way))
+        accounts = Account.query4Summary(Account, '', thisMonth)
 
         # 取得現金資產
         accountBalances = AccountBalance.culculateBalance(
@@ -130,7 +133,7 @@ def getBalanceSheetByNow():
         assets.append(EstateNetValueHistory.outputForBalanceSheet(
             EstateNetValueHistory, estates))
 
-        cards = CreditCard.query4Summary(CreditCard, lastMonth, thisMonth)
+        cards = CreditCard.query4Summary(CreditCard, '', thisMonth)
 
         # 取得信用卡負債
         cardBalances = CreditCardBalance.culculateBalance(

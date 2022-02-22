@@ -62,13 +62,13 @@ class StockNetValueHistory(db.Model):
         return {
             'type': '流動資產',
             'name': '股票',
-            'amount': amount
+            'amount': round(amount, 2)
         }
 
     def outputForReport(self, stock):
         return {
             'assetType': '股票',
             'detailType': stock.asset_name,
-            'name': stock.stock_code,
+            'name': stock.stock_name,
             'amount': stock.price * stock.fx_rate
         }

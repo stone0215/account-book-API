@@ -86,7 +86,7 @@ class Journal(db.Model):
             "SELECT *, name AS action_main_name, spending*IFNULL(fx_rate,1) AS spending FROM Journal ")
         sql.append(" LEFT JOIN Code_Data ON code_id=action_main ")
         sql.append(
-            " LEFT JOIN (SELECT id, fx_code FROM Account) Account ON Account.id=Journal.spend_way ")
+            " LEFT JOIN (SELECT id, fx_code FROM Account) Account ON Account.id=Journal.spend_way AND spend_way_table='Account' ")
         sql.append(
             " LEFT JOIN (SELECT code, buy_rate AS fx_rate, MAX(import_date) FROM FX_Rate ")
         sql.append(
@@ -101,14 +101,14 @@ class Journal(db.Model):
         sql = []
         # 賣出外幣
         sql.append(
-            "SELECT '賣出' AS action, '換匯' AS target,  ABS(CASE WHEN spend_way_type='finance' THEN spending*note ELSE spending END) AS spending FROM Journal ")
+            "SELECT '賣出' AS action, '換匯' AS target,  (CASE WHEN spend_way_type='finance' THEN spending*note ELSE spending END)*-1 AS spending FROM Journal ")
         sql.append(
             f"WHERE vesting_month = '{vestingMonth}' AND ((spend_way_type='finance' AND action_sub_type='normal' AND spending < 0 ) ")
         sql.append(
             "OR (spend_way_type='normal' AND action_sub_type='finance' AND spending > 0 )) ")
         # 賣出股票
         sql.append(
-            " UNION ALL SELECT '賣出' AS action, '股票' AS target, excute_price*IFNULL(fx_rate,1) AS spending ")
+            " UNION ALL SELECT '賣出' AS action, '股票' AS target, excute_price*IFNULL(fx_rate,1)*-1 AS spending ")
         sql.append(
             " FROM Stock_Detail AS Stock LEFT JOIN (SELECT id, fx_code FROM Account) Account ON Account.id=Stock.account_id ")
         sql.append(
@@ -119,7 +119,7 @@ class Journal(db.Model):
             f"WHERE STRFTIME('%Y%m', excute_date) = '{vestingMonth}' AND excute_type='sell' ")
         # 贖回保險
         sql.append(
-            " UNION ALL SELECT '賣出' AS action, '保險' AS target, excute_price*IFNULL(fx_rate,1) AS spending ")
+            " UNION ALL SELECT '賣出' AS action, '保險' AS target, excute_price*IFNULL(fx_rate,1)*-1 AS spending ")
         sql.append(
             " FROM Insurance_Journal AS Insurance LEFT JOIN Insurance AS Insurance_Main ON Insurance_Main.insurance_id = Insurance.insurance_id ")
         sql.append(
@@ -132,7 +132,7 @@ class Journal(db.Model):
             f"WHERE STRFTIME('%Y%m', excute_date) = '{vestingMonth}' AND insurance_excute_type='return' ")
         # 賣出不動產
         sql.append(
-            " UNION ALL SELECT '賣出' AS action, '不動產' AS target, excute_price AS spending FROM Estate_Journal AS Estate ")
+            " UNION ALL SELECT '賣出' AS action, '不動產' AS target, excute_price*-1 AS spending FROM Estate_Journal AS Estate ")
         sql.append(
             f"WHERE STRFTIME('%Y%m', excute_date) = '{vestingMonth}' AND estate_excute_type='sold' ")
         # 買入外幣
@@ -155,7 +155,7 @@ class Journal(db.Model):
             f"WHERE STRFTIME('%Y%m', excute_date) = '{vestingMonth}' AND excute_type='buy' ")
         # 買入保險
         sql.append(
-            " UNION ALL SELECT '買入' AS action, '保險' AS target, excute_price*IFNULL(fx_rate,1) AS spending FROM Insurance_Journal AS Insurance ")
+            " UNION ALL SELECT '買入' AS action, '保險' AS target, ABS(excute_price*IFNULL(fx_rate,1)) AS spending FROM Insurance_Journal AS Insurance ")
         sql.append(
             " LEFT JOIN Insurance AS Insurance_Main ON Insurance_Main.insurance_id = Insurance.insurance_id ")
         sql.append(
@@ -184,10 +184,10 @@ class Journal(db.Model):
     def queryForSpendingReport(self, start, end, format):
         sql = []
         sql.append(
-            f"SELECT STRFTIME('{format}', spend_date) AS dateString, spend_way_type, action_main_type, spending*IFNULL(fx_rate,1) AS spending, note, name FROM Journal ")
+            f"SELECT STRFTIME('{format}', spend_date) AS dateString, spend_way_type, action_main_type, spending*IFNULL(fx_rate,1) AS spending, name FROM Journal ")
         sql.append(" LEFT JOIN Code_Data ON code_id=action_main ")
         sql.append(
-            " LEFT JOIN (SELECT id, fx_code FROM Account) Account ON Account.id=Journal.spend_way ")
+            " LEFT JOIN (SELECT id, fx_code FROM Account) Account ON Account.id=Journal.spend_way AND spend_way_table='Account' ")
         sql.append(
             " LEFT JOIN (SELECT code, buy_rate AS fx_rate, MAX(import_date) FROM FX_Rate ")
         sql.append(
@@ -281,7 +281,7 @@ class Journal(db.Model):
             'dateString': data.dateString,
             'type': data.action_main_type,
             'name': data.name,
-            'amount': abs(round(data.spending * int(data.note), 2)) if data.spend_way_type == 'finance' else abs(data.spending)
+            'amount': round(data.spending, 2) if data.spend_way_type == 'finance' else data.spending
         }
 
     def outputForGifted(self, data):

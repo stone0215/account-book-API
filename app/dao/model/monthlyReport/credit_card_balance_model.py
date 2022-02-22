@@ -94,10 +94,10 @@ class CreditCardBalance(db.Model):
             obj = self(card)
             obj.vesting_month = vestingMonth
             for journal in journals:
-                # 處理扣項金額
+                # 處理刷卡金額，負的為消費，正的為刷退
                 if journal['spend_way_table'] == 'Credit_Card' and obj.id == int(journal['spend_way']):
                     obj.balance -= journal['spending']
-                # 處理加項金額
+                # 處理繳信用卡金額
                 elif journal['action_sub_table'] == 'Credit_Card' and obj.id == int(journal['action_sub']):
                     obj.balance += journal['spending']
 
@@ -121,5 +121,5 @@ class CreditCardBalance(db.Model):
 
         return {
             'name': '信用卡',
-            'amount': abs(amount)
+            'amount': amount
         }
