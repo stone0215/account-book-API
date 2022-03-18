@@ -20,7 +20,7 @@ class Account(db.Model):
 
     # 物件建立之後所要建立的初始化動作
     def __init__(self, Account):
-        self.account_id = Account['account_id']
+        self.account_id = Account['account_id'] if 'account_id' in Account else None
         self.name = Account['name']
         self.account_type = Account['account_type']
         self.fx_code = Account['fx_code']
@@ -28,7 +28,7 @@ class Account(db.Model):
         self.in_use = Account['in_use']  # Y/M
         self.discount = Account['discount'] or None
         self.memo = Account['memo'] if 'memo' in Account else None
-        self.owner = Account['owner'] or None
+        self.owner = Account['owner'] if 'owner' in Account else None
         self.carrier_no = Account['carrier_no'] if 'carrier_no' in Account else None
         self.account_index = Account['account_index'] or None
 

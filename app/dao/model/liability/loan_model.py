@@ -70,7 +70,7 @@ class Loan(db.Model):
         return db.engine.execute(''.join(sql))  # sql 陣列轉字串
 
     def query4Selection(self):
-        return self.query.with_entities(self.loan_id, self.loan_name, self.loan_index)
+        return self.query.with_entities(self.loan_id, self.loan_name, self.loan_type, self.loan_index)
 
     def query4Summary(self, vestingMonth):
         sql = []
@@ -162,5 +162,6 @@ class Loan(db.Model):
             'key': Loan.loan_id,
             'value': Loan.loan_name,
             'index:': Loan.loan_index,
-            'table': 'Loan'
+            'table': 'Loan',
+            'type': Loan.loan_type
         }

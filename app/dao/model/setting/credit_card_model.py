@@ -59,7 +59,7 @@ class CreditCard(db.Model):
         return db.engine.execute(''.join(sql))
 
     def query4Selection(self):
-        return self.query.with_entities(self.credit_card_id, self.card_name, self.credit_card_index).filter_by(in_use='Y')
+        return self.query.with_entities(self.credit_card_id, self.card_name, self.feedback_way, self.credit_card_index).filter_by(in_use='Y')
 
     def query4Summary(self, lastMonth, vestingMonth):
         sql = []
@@ -133,5 +133,6 @@ class CreditCard(db.Model):
             'key': CreditCard.credit_card_id,
             'value': CreditCard.card_name,
             'index': CreditCard.credit_card_index,
-            'table': 'Credit_Card'
+            'table': 'Credit_Card',
+            'type': CreditCard.feedback_way
         }

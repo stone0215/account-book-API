@@ -21,6 +21,19 @@ def init_code_api(app):
         else:
             return jsonify(ResponseFormat.true_return(ResponseFormat, output))
 
+    @app.route('/code/all-sub-code', methods=['GET'])
+    def getAllSubCodes():
+        output = []
+
+        try:
+            codes = Code.queryAllSubCodeList(Code)
+            for code in codes:
+                output.append(Code.output4SubSelection(Code, code))
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, output))
+
     @app.route('/code', methods=['POST'])
     def addCode():
         try:

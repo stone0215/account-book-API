@@ -51,7 +51,8 @@ def init_util_api(app):
 
             if len(selections) > 0:
                 output.append({
-                    'title': '信用卡',
+                    'title': 'Credit_Card',
+                    'name': '信用卡',
                     'selections': selections
                 })
         except Exception as error:
@@ -72,7 +73,8 @@ def init_util_api(app):
                 for loan in tempSelections:
                     selections.append(Loan.output4Selection(Loan, loan))
                 output.append({
-                    'title': '貸款',
+                    'title': 'Loan',
+                    'name': '貸款',
                     'selections': selections
                 })
         except Exception as error:
@@ -93,7 +95,8 @@ def init_util_api(app):
                 selections.append(
                     Insurance.output4Selection(Insurance, insurance))
             output.append({
-                'title': '保險',
+                'title': 'Insurance',
+                'name': '保險',
                 'selections': selections
             })
         except Exception as error:

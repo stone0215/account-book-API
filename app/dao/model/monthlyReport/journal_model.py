@@ -132,7 +132,7 @@ class Journal(db.Model):
             f"WHERE STRFTIME('%Y%m', excute_date) = '{vestingMonth}' AND insurance_excute_type='return' ")
         # 賣出不動產
         sql.append(
-            " UNION ALL SELECT '賣出' AS action, '不動產' AS target, excute_price*-1 AS spending FROM Estate_Journal AS Estate ")
+            " UNION ALL SELECT '賣出' AS action, '不動產' AS target, excute_price AS spending FROM Estate_Journal AS Estate ")
         sql.append(
             f"WHERE STRFTIME('%Y%m', excute_date) = '{vestingMonth}' AND estate_excute_type='sold' ")
         # 買入外幣
@@ -172,7 +172,7 @@ class Journal(db.Model):
         sql.append(
             f"WHERE STRFTIME('%Y%m', excute_date) = '{vestingMonth}' AND estate_excute_type='downPayment' ")
         sql.append(
-            " UNION ALL SELECT '買入' AS action, '不動產' AS target, excute_price AS spending FROM Estate ")
+            " UNION ALL SELECT '買入' AS action, '不動產' AS target, excute_price*-1 AS spending FROM Estate ")
         sql.append(
             " LEFT JOIN Loan_Journal AS Loan ON Loan.loan_id = Estate.loan_id ")
         sql.append(

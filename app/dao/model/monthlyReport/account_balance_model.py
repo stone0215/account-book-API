@@ -20,7 +20,7 @@ class AccountBalance(db.Model):
         self.vesting_month = AccountBalance.vesting_month
         self.id = AccountBalance.id
         self.name = AccountBalance.name
-        self.balance = AccountBalance.balance
+        self.balance = round(AccountBalance.balance, 2)
         self.fx_code = AccountBalance.fx_code
         self.fx_rate = AccountBalance.fx_rate
         self.is_calculate = AccountBalance.is_calculate
@@ -62,8 +62,8 @@ class AccountBalance(db.Model):
             for journal in journals:
                 # 處理扣項金額
                 if journal['spend_way_table'] == 'Account' and obj.id == int(journal['spend_way']):
-                    print(
-                        journal['spending'], obj.balance) if journal['spend_way'] == '20' else None
+                    # print(
+                    #     journal['spending'], obj.balance) if journal['spend_way'] == '18' else None
                     obj.balance += journal['spending']
 
                 # 處理加項金額

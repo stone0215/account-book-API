@@ -41,6 +41,80 @@ def init_journal_api(app):
         else:
             return jsonify(ResponseFormat.true_return(ResponseFormat, {"journalList": journalList, "gainLoss": gainLoss}))
 
+    @app.route('/journal/expenditure-ratio/<string:vestingMonth>', methods=['GET'])
+    def getExpenditureRatioByVestingMonth(vestingMonth):
+
+        try:
+            journals = Journal.queryForExpenditureRatio(
+                Journal, vestingMonth, 'action_main_type')
+
+            expendingInnerPie = []
+            for key, groups in groupby(journals, lambda item: item.action_main_type):
+                spendings = [item.spending for item in list(groups)]
+                expendingInnerPie.append(
+                    {'name': key, 'value': abs(round(sum(spendings), 2))})  # 取絕對值計算百分比
+
+            # 不確定是因為 groupby 後 journals 被清空還是什麼原因導致資料表被釋放，所以需要重撈，之後可以考慮改 panda
+            journals = Journal.queryForExpenditureRatio(
+                Journal, vestingMonth, 'action_main')
+            expendingOuterPie = []
+            for key, groups in groupby(journals, lambda item: (item.action_main, item.action_main_name, item.action_main_type)):
+                spendings = [item.spending for item in list(groups)]
+                expendingOuterPie.append({'name': key[1],
+                                          'type': key[2],
+                                          'value': abs(round(sum(spendings), 2))})
+
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, {'expendingInnerPie': expendingInnerPie, 'expendingOuterPie': expendingOuterPie}))
+
+    @app.route('/journal/invest-ratio/<string:vestingMonth>', methods=['GET'])
+    def getInvestRatioByVestingMonth(vestingMonth):
+
+        try:
+            assets = Journal.queryForInvestRatio(
+                Journal, vestingMonth)
+            assetOuterPie = []
+            for key, groups in groupby(assets, lambda item: (item.action, item.target)):
+                spendings = [item.spending for item in list(groups)]
+                assetOuterPie.append({'name': key[1],
+                                      'type': key[0],
+                                      'value': round(sum(spendings), 2)})
+
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, assetOuterPie))
+
+    @app.route('/journal/expenditure-budget/<string:vestingMonth>', methods=['GET'])
+    def getExpenditureBudgetByVestingMonth(vestingMonth):
+        output = []
+
+        try:
+            budgets = Budget.queryForExpenditureBudget(Budget, vestingMonth)
+            for budget in budgets:
+                output.append(Budget.outputForBudget(Budget, budget))
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, output))
+
+    @app.route('/journal/liability/<string:vestingMonth>', methods=['GET'])
+    def getLiabilityByVestingMonth(vestingMonth):
+        output = []
+
+        try:
+            liabilities = CreditCardBalance.queryForLiabilities(
+                CreditCardBalance, vestingMonth)
+            for liability in liabilities:
+                output.append(CreditCardBalance.outputForLiability(
+                    CreditCardBalance, liability))
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, output))
+
     @app.route('/journal', methods=['POST'])
     def addJournal():
         global date_format
@@ -189,77 +263,3 @@ def init_journal_api(app):
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to process summary data'))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
-
-    @app.route('/journal/expenditure-ratio/<string:vestingMonth>', methods=['GET'])
-    def getExpenditureRatioByVestingMonth(vestingMonth):
-
-        try:
-            journals = Journal.queryForExpenditureRatio(
-                Journal, vestingMonth, 'action_main_type')
-
-            expendingInnerPie = []
-            for key, groups in groupby(journals, lambda item: item.action_main_type):
-                spendings = [item.spending for item in list(groups)]
-                expendingInnerPie.append(
-                    {'name': key, 'value': abs(round(sum(spendings), 2))})  # 取絕對值計算百分比
-
-            # 不確定是因為 groupby 後 journals 被清空還是什麼原因導致資料表被釋放，所以需要重撈，之後可以考慮改 panda
-            journals = Journal.queryForExpenditureRatio(
-                Journal, vestingMonth, 'action_main')
-            expendingOuterPie = []
-            for key, groups in groupby(journals, lambda item: (item.action_main, item.action_main_name, item.action_main_type)):
-                spendings = [item.spending for item in list(groups)]
-                expendingOuterPie.append({'name': key[1],
-                                          'type': key[2],
-                                          'value': abs(round(sum(spendings), 2))})
-
-        except Exception as error:
-            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
-        else:
-            return jsonify(ResponseFormat.true_return(ResponseFormat, {'expendingInnerPie': expendingInnerPie, 'expendingOuterPie': expendingOuterPie}))
-
-    @app.route('/journal/invest-ratio/<string:vestingMonth>', methods=['GET'])
-    def getInvestRatioByVestingMonth(vestingMonth):
-
-        try:
-            assets = Journal.queryForInvestRatio(
-                Journal, vestingMonth)
-            assetOuterPie = []
-            for key, groups in groupby(assets, lambda item: (item.action, item.target)):
-                spendings = [item.spending for item in list(groups)]
-                assetOuterPie.append({'name': key[1],
-                                      'type': key[0],
-                                      'value': round(sum(spendings), 2)})
-
-        except Exception as error:
-            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
-        else:
-            return jsonify(ResponseFormat.true_return(ResponseFormat, assetOuterPie))
-
-    @app.route('/journal/expenditure-budget/<string:vestingMonth>', methods=['GET'])
-    def getExpenditureBudgetByVestingMonth(vestingMonth):
-        output = []
-
-        try:
-            budgets = Budget.queryForExpenditureBudget(Budget, vestingMonth)
-            for budget in budgets:
-                output.append(Budget.outputForBudget(Budget, budget))
-        except Exception as error:
-            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
-        else:
-            return jsonify(ResponseFormat.true_return(ResponseFormat, output))
-
-    @app.route('/journal/liability/<string:vestingMonth>', methods=['GET'])
-    def getLiabilityByVestingMonth(vestingMonth):
-        output = []
-
-        try:
-            liabilities = CreditCardBalance.queryForLiabilities(
-                CreditCardBalance, vestingMonth)
-            for liability in liabilities:
-                output.append(CreditCardBalance.outputForLiability(
-                    CreditCardBalance, liability))
-        except Exception as error:
-            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
-        else:
-            return jsonify(ResponseFormat.true_return(ResponseFormat, output))
