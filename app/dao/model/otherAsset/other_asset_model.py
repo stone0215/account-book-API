@@ -40,7 +40,7 @@ class OtherAsset(db.Model):
 
         # 帳戶
         sql.append(
-            f"SELECT vesting_month AS dateString, balance, fx_rate FROM Account_Balance WHERE ")
+            f"SELECT vesting_month AS dateString, balance, fx_rate FROM Account_Balance WHERE is_calculate='Y' AND ")
         if type == 'month':
             sql.append(
                 f" vesting_month >= '{start}' AND vesting_month <= '{end}' ")

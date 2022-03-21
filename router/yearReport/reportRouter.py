@@ -111,11 +111,11 @@ def getBalanceSheetByNow():
         else:
             journals.sort(key=lambda item: (
                 item.spend_way_table, item.spend_way))
-        accounts = Account.query4Summary(Account, '', thisMonth)
+        accounts = Account.query4Summary(Account, '', thisMonth).fetchall()
 
         # 取得現金資產
         accountBalances = AccountBalance.culculateBalance(
-            AccountBalance, thisMonth, journals, accounts)
+            AccountBalance, accounts[0]['vesting_month'] if len(accounts) else thisMonth, journals, accounts)
         # 取得股票資產
         stocks = StockJournal.query4Summary(StockJournal, thisMonth)
         # 取得儲蓄險資產

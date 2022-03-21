@@ -63,7 +63,7 @@ class Account(db.Model):
     def query4Summary(self, lastMonth, vestingMonth):
         sql = []
         sql.append(
-            "SELECT '' AS vesting_month, Account.id, Account.name, IFNULL(balance,0) AS balance, Account.fx_code, IFNULL(buy_rate,1) AS fx_rate, Account.is_calculate ")
+            "SELECT Balance.vesting_month AS vesting_month, Account.id, Account.name, IFNULL(balance,0) AS balance, Account.fx_code, IFNULL(buy_rate,1) AS fx_rate, Account.is_calculate ")
         sql.append(
             " FROM Account LEFT JOIN Account_Balance Balance ON Balance.vesting_month = ")
         if lastMonth != '':
