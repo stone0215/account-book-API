@@ -10,7 +10,7 @@ class StockDetail(db.Model):
     distinct_number = db.Column(db.Integer, primary_key=True)
     stock_id = db.Column(db.Integer, nullable=False, index=True)
     excute_type = db.Column(db.String(10), nullable=False)
-    excute_amount = db.Column(db.SmallInteger)
+    excute_amount = db.Column(db.Float)
     excute_price = db.Column(db.Float)
     excute_date = db.Column(db.DateTime, nullable=False, index=True)
     account_id = db.Column(db.Integer, nullable=False)

@@ -62,7 +62,7 @@ def init_account_api(app):
                 account.discount = inputData['discount']
                 account.memo = inputData['memo']
                 account.owner = inputData['owner']
-                account.owner = inputData['carrier_no']
+                account.owner = inputData['carrier_no'] if 'carrier_no' in inputData else None
                 account.account_index = inputData['account_index']
                 if Account.update(Account):
                     return jsonify(ResponseFormat.true_return(ResponseFormat, None))

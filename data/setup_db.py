@@ -19,7 +19,7 @@ def create_db(app):
     with open(app.config["INIT_DATA"], encoding="utf8") as init_data:
         init_data_sql = init_data.read()
 
-    db = sqlite3.connect(app.config["DB_NAME"])  # , check_same_thread=False)
+    db = sqlite3.connect(app.config["DB_NAME"], check_same_thread=False)
     with db:
         db.executescript(create_db_sql)
         db.commit()

@@ -1,8 +1,10 @@
-from datetime import datetime, timedelta
+import csv
+from datetime import datetime, timedelta, timezone
 from flask import jsonify, request
 from threading import Thread
 import time
 import requests
+from requests.adapters import HTTPAdapter
 import yfinance
 
 from api.response_format import ResponseFormat
@@ -33,9 +35,11 @@ def init_global_api(app):
             if dataType == "invoice":
                 invoiceThread = Thread(
                     target=importInvoice, args=(inputData['period'], ))
+                # 財政部已不支援自然人使用 API
+                # Thread(
+                #     target=importInvoiceFromNetwork, args=(inputData['period'], ))
                 invoiceThread.start()
             elif dataType == 'stock':
-                # , args=(data, ))
                 stockThread = Thread(
                     target=importStockPrice, args=(inputData['period'], ))
                 stockThread.start()
@@ -113,8 +117,10 @@ def init_global_api(app):
             if len(datas):
                 FXRate.bulkInsert(FXRate, datas)
 
-    def importInvoice(period):
+    def importInvoiceFromNetwork(period):
+        invoiceList = None
         invoicePayload
+        datas = []
         today = datetime.today().date() if period == '' else datetime.strptime(
             period, '%Y%m').replace(day=28) + timedelta(days=4)
 
@@ -134,14 +140,18 @@ def init_global_api(app):
             invoicePayload["startDate"] = today.strftime("%Y/%m/01")
             invoicePayload["endDate"] = today.strftime("%Y/%m/%d")
 
-            invoiceList = requests.post(
+            sessionInvoice = requests.Session()
+            sessionInvoice.mount('http://', HTTPAdapter(max_retries=3))
+            sessionInvoice.mount('https://', HTTPAdapter(max_retries=3))
+            invoiceList = sessionInvoice.post(
                 "https://api.einvoice.nat.gov.tw/PB2CAPIVAN/invServ/InvServ",
                 params=invoicePayload,
-                timeout=(10, 30),
+                timeout=(30, 20),
             )
 
             if invoiceList.json()["code"] == 200:
-                datas = []
+                print('got all invoice list', len(
+                    invoiceList.json()["details"]))
                 data = {
                     "vesting_month": today.strftime("%Y%m"),
                     "action_main": "No",
@@ -181,6 +191,7 @@ def init_global_api(app):
                                 data["spend_way_table"] = carrierNo.table_name
 
                             # 取得發票消費明細
+                            time.sleep(10)
                             invoicePayload["expTimeStamp"] = invoicePayload[
                                 "timeStamp"
                             ] = (int(datetime.now().timestamp()) + 100)
@@ -191,27 +202,128 @@ def init_global_api(app):
                             ).strftime("%Y/%m/%d")
                             invoicePayload["amount"] = invoice["amount"]
 
-                            invoiceDetail = requests.post(
+                            invoiceDetail = sessionInvoice.post(
                                 "https://api.einvoice.nat.gov.tw/PB2CAPIVAN/invServ/InvServ",
                                 params=invoicePayload,
-                                timeout=(10, 30),
+                                timeout=(30, 20),
                             )
 
                             if invoiceDetail.json()["code"] == 200:
+                                print('one data: ', invoiceDetail)
                                 for detail in invoiceDetail.json()["details"]:
                                     data[
                                         "note"
                                     ] = f"{data['note']}{detail['description']} {detail['amount']}, "
 
                                 datas.append(Journal(data))
+                                Journal.add(Journal, Journal(data))
                                 data["note"] = ""
-                                time.sleep(1)
+
+                    if len(datas):
+                        print('added')
+                        # Journal.bulkInsert(Journal, datas)
+                    else:
+                        print('done')
+
+        except Exception as error:
+            print('error: ', error)
+            if len(datas):
+                Journal.bulkInsert(Journal, datas)
+            if invoiceList == None:
+                # 如果出錯就重新執行，直到沒有錯誤為止
+                time.sleep(30)
+                importInvoice(period)
+            else:
+                print('finish')
+
+    def importInvoice(period):
+        invoiceList = None
+        datas = []
+        data = None
+        isSkip = False
+        # 資料變多再提出
+        m_list = [{"name": '台灣之星', "main": '92', "main_type": 'Fixed', "main_table": 'Code', "sub": '100', "sub_type": 'Fixed', "sub_table": 'Code'},
+                  {"name": '台灣大哥大', "main": '92',
+                      "main_type": 'Fixed', "main_table": 'Code', "sub": '100', "sub_type": 'Fixed', "sub_table": 'Code'},
+                  {"name": '台灣中油', "main": '4', "main_type": 'Floating', "main_table": 'Code', "sub": '32', "sub_type": 'Floating', "sub_table": 'Code'}]
+
+        try:
+            with app.app_context():  # 因為新開 thread 但共用 db 所以需要指定
+                # 開啟 CSV 檔案
+                with open('invoice.csv', newline='', encoding="utf-8") as csvfile:
+                    # 讀取 CSV 檔案內容
+                    rows = csv.reader(csvfile, delimiter='|')
+
+                    for index, row in enumerate(rows):
+                        # ['M', '載具名稱', '載具號碼', '發票日期', '商店統編', '商店店名', '發票號碼', '總金額', '發票狀態', '']
+                        # ['D', '發票號碼', '小計', '品項名稱', '']
+                        mode = row[0]
+                        source = row[2]
+                        invoiceMonth = row[3][:6] if mode == 'M' else ''
+                        
+                        if mode == 'M' or mode == 'D':
+                            if mode == 'M':
+                                # 每切換一次M，有資料就紀錄
+                                if data is not None:
+                                    datas.append(Journal(data))
+                                    # Journal.add(Journal, Journal(data))
+                                    data = None
+                                
+                                # 判斷該載具/該筆資料是否跳過
+                                isSkip = True if source in app.config['INVOICE_SKIP'] or period != invoiceMonth else False
+                                
+                                if isSkip == False:
+                                    found_values = [
+                                        item for item in m_list if item.get('name', '') in row[5]]
+                                    target = found_values[0] if found_values else None
+                                    # 利用載具號碼找出相對應消費方式:
+                                    carrierNo = CreditCard.queryByCarrierNo(
+                                        CreditCard, row[2]
+                                    )
+                                    data = {
+                                        "vesting_month": row[3][:6],
+                                        "spend_way": carrierNo.id if carrierNo else "No",
+                                        "spend_way_type": carrierNo.type if carrierNo else "No",
+                                        "spend_way_table": carrierNo.table_name if carrierNo else "No",
+                                        "action_main": target["main"] if target else "No",
+                                        "action_main_type": target["main_type"] if target else "No",
+                                        "action_main_table": target["main_table"] if target else "No",
+                                        "action_sub": target["sub"] if target else "No",
+                                        "action_sub_type": target["sub_type"] if target else "No",
+                                        "action_sub_table": target["sub_table"] if target else "No",
+                                        "spend_date": datetime.strptime(row[3], "%Y%m%d").replace(tzinfo=timezone.utc),
+                                        "note": row[5],
+                                        "invoice_number": row[6],
+                                        "spending": int(row[7]) * -1
+                                    }
+                            else:
+                                if isSkip == False:
+                                    hasRecorded = Journal.queryByVestingMonthAndInvoice(
+                                        Journal, data["vesting_month"], data["invoice_number"]
+                                    )
+
+                                    # 如果找不到相關資料才寫入
+                                    if hasRecorded is None:
+                                        # 發票消費明細
+                                        data[
+                                            "note"
+                                        ] = f"{data['note']}\n{row[3]} {row[2]}, "
+                                        
+                    # 可能最後一筆是需要紀錄的
+                    if data is not None:
+                        datas.append(Journal(data))
+                        # Journal.add(Journal, Journal(data))
+                        data = None
 
                     if len(datas):
                         Journal.bulkInsert(Journal, datas)
+                        print('added')
+                    else:
+                        print('done')
+        except FileNotFoundError:
+            print("invoice.csv was not found.")
         except Exception as error:
-            # 如果出錯就重新執行，直到沒有錯誤為止
-            importInvoice()
+            print('error: ', error)
 
     def importStockPrice(period):
         with app.app_context():  # 因為新開 thread 但共用 db 所以需要指定
@@ -219,32 +331,52 @@ def init_global_api(app):
 
             stockList = StockJournal.queryStockCodeList(StockJournal)
             for stock in stockList:
-                stockData = yfinance.Ticker(
-                    stock.stock_code + ".TW"
-                    if stock.vesting_nation == "TW"
-                    else stock.stock_code
-                )
-                stockPrice = stockData.history(period="1d")
-                fetch_date = datetime.utcfromtimestamp(
-                    int(list(stockPrice["Close"].items())[0][0].timestamp())
-                )
-
-                hasRecorded = StockPriceHistory.queryByKey(
-                    StockPriceHistory, fetch_date, stock.stock_code
-                )
-
-                # 如果找不到相關資料才寫入
-                if hasRecorded["recordNum"] == 0:
-                    datas.append(
-                        {
-                            "stock_code": stock.stock_code,
-                            "fetch_date": fetch_date,
-                            "open_price": list(stockPrice["Open"].items())[0][1],
-                            "highest_price": list(stockPrice["High"].items())[0][1],
-                            "lowest_price": list(stockPrice["Low"].items())[0][1],
-                            "close_price": list(stockPrice["Close"].items())[0][1],
-                        }
+                try:
+                    stockData = yfinance.Ticker(
+                        stock.stock_code + ".TW"
+                        if stock.vesting_nation == "TW"
+                        else stock.stock_code
                     )
+
+                    # stockPrice = stockData.history(period="1d")
+                    # yfinance 資料來源可參考 https://query1.finance.yahoo.com/v8/finance/chart/ATCO?period1=1648648589&period2=1648821389&interval=1d&events=history&=hP2rOschxO0
+                    # 取某月份最後一日
+                    import_date = datetime.today().date() if period == '' else datetime.strptime(
+                        period, '%Y%m').replace(day=28) + timedelta(days=4)
+                    import_date = import_date if period == '' else import_date - \
+                        timedelta(days=import_date.day)
+                    # 不知道為啥，history 用範圍無法查台股
+                    stockPrice = (stockData.history(period="1d") if stock.vesting_nation == "TW"
+                                  else stockData.history(
+                        start=import_date, end=import_date))
+                    while stockData.info['regularMarketPrice'] != None and stockPrice.empty:
+                        import_date = import_date-timedelta(days=1)
+                        stockPrice = stockData.history(
+                            start=import_date, end=import_date)
+
+                    fetch_date = datetime.utcfromtimestamp(
+                        int(list(stockPrice["Close"].items())[
+                            0][0].timestamp())
+                    )
+
+                    hasRecorded = StockPriceHistory.queryByKey(
+                        StockPriceHistory, fetch_date, stock.stock_code
+                    )
+
+                    # 如果找不到相關資料才寫入
+                    if hasRecorded["recordNum"] == 0:
+                        datas.append(
+                            {
+                                "stock_code": stock.stock_code,
+                                "fetch_date": fetch_date,
+                                "open_price": list(stockPrice["Open"].items())[0][1],
+                                "highest_price": list(stockPrice["High"].items())[0][1],
+                                "lowest_price": list(stockPrice["Low"].items())[0][1],
+                                "close_price": list(stockPrice["Close"].items())[0][1],
+                            }
+                        )
+                except Exception as error:
+                    print(error)
 
             if len(datas):
                 StockPriceHistory.bulkInsert(StockPriceHistory, datas)

@@ -39,7 +39,7 @@ class AccountBalance(db.Model):
         try:
             for item in datas:
                 params.append((item.vesting_month, item.id,
-                               item.name, item.balance, item.fx_code, item.fx_rate, item.is_calculate))
+                               item.name, round(item.balance, 2), item.fx_code, item.fx_rate, item.is_calculate))
 
             db.engine.execute(sql, params)
             return True
@@ -72,8 +72,8 @@ class AccountBalance(db.Model):
                         obj.balance -= round(journal['spending'] /
                                              float(journal['note']), 2)
                     elif journal['spend_way_type'] == 'finance' and journal['action_sub_type'] == 'normal':
-                        obj.balance -= journal['spending'] * \
-                            float(journal['note'])
+                        obj.balance -= round(journal['spending'] *
+                                             float(journal['note']), 2)
                     else:
                         obj.balance -= journal['spending']
 

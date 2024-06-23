@@ -41,8 +41,9 @@ class EstateNetValueHistory(db.Model):
         # else:
         #     return False
 
-    def delete(self, asset_id):
-        self.query.filter_by(asset_id=asset_id).delete()
+    def deleteByVestingMonth(self, vesting_month):
+        self.query.filter(self.vesting_month >= vesting_month).delete()
+
         if DaoBase.session_commit(self) == '':
             return True
         else:

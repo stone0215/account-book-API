@@ -55,11 +55,11 @@ class CreditCardBalance(db.Model):
         sql.append(
             "LEFT JOIN (SELECT loan_id, SUM(excute_price) AS spending FROM Loan_Journal ")
         sql.append(
-            f"WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND loan_excute_type='increment' GROUP BY loan_id) AS Journal_Spending ON Loan.loan_id=Journal_Spending.loan_id ")
+            f"WHERE STRFTIME('%Y%m', excute_date) = '{vestingMonth}' AND loan_excute_type='increment' GROUP BY loan_id) AS Journal_Spending ON Loan.loan_id=Journal_Spending.loan_id ")
         sql.append(
             "LEFT JOIN (SELECT loan_id, SUM(excute_price) AS payment FROM Loan_Journal ")
         sql.append(
-            f"WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND loan_excute_type='principal' GROUP BY loan_id) AS Journal_Payment ON Loan.loan_id=Journal_Payment.loan_id ")
+            f"WHERE STRFTIME('%Y%m', excute_date) = '{vestingMonth}' AND loan_excute_type='principal' GROUP BY loan_id) AS Journal_Payment ON Loan.loan_id=Journal_Payment.loan_id ")
         sql.append(
             "WHERE repayed='N' ")
         sql.append(" ORDER BY type ASC ")

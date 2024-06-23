@@ -5,6 +5,7 @@ from flask import jsonify, request
 from api.response_format import ResponseFormat
 from app.dao.model.setting.budget_model import Budget
 from app.dao.model.setting.code_model import Code
+from app.dao.model.monthlyReport.journal_model import Journal
 
 
 def init_budget_api(app):
@@ -43,16 +44,25 @@ def init_budget_api(app):
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 
-    @app.route('/budget/<string:next_year>', methods=['POST'])
+    @app.route('/budget/<int:next_year>', methods=['POST'])
     def bulkInsertBudget(next_year):
         prepared_data = []
         try:
+            Budget.deleteByYear(Budget, next_year)
             # 有設定好選單才有辦法新增
             codes = Code.query4BudgetSelection(Code)
 
             for code in codes:
-                prepared_data.append(
-                    Budget(budget_year=next_year, category_code=code.code_id, category_name=code.name, code_type=code.code_type))
+                newBudgets = Journal.queryForBudget(
+                    Journal, next_year-1, code.code_id).fetchall()
+
+                budget = {'budget_year': next_year, 'category_code': code.code_id,
+                          'category_name': code.name, 'code_type': code.code_type}
+                for newBudget in newBudgets:
+                    budget['expected' +
+                           newBudget.month] = round(newBudget.spending, 2)
+
+                prepared_data.append(Budget(budget))
 
             if Budget.bulkInsert(Budget, prepared_data):
                 return jsonify(ResponseFormat.true_return(ResponseFormat, None))

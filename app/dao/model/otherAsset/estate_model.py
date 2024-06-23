@@ -75,9 +75,9 @@ class Estate(db.Model):
         sql.append(
             f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND estate_excute_type != 'marketValue' GROUP BY estate_id) Journal ON Journal.estate_id = Estate.estate_id ")
         sql.append(
-            " LEFT JOIN (SELECT estate_id, excute_price AS market_value FROM Estate_Journal ")
+            " LEFT JOIN (SELECT estate_id, excute_price AS market_value, MAX(excute_date) FROM Estate_Journal ")
         sql.append(
-            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND estate_excute_type = 'marketValue') Journal_Market ON Journal_Market.estate_id = Estate.estate_id ")
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND estate_excute_type = 'marketValue' GROUP BY estate_id) Journal_Market ON Journal_Market.estate_id = Estate.estate_id ")
 
         sql.append(" WHERE estate_status != 'sold' ORDER BY Estate.estate_id ASC")
 

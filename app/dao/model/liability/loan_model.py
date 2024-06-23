@@ -54,7 +54,7 @@ class Loan(db.Model):
             "IFNULL(principal_payed,0)+IFNULL(fee_payed,0) AS total_payed, repayed ")
         sql.append("FROM Loan Loan_Main ")
         sql.append(
-            "LEFT JOIN (SELECT loan_id, IFNULL(SUM(excute_price),0) AS principal_payed ")
+            "LEFT JOIN (SELECT loan_id, IFNULL(ABS(SUM(excute_price)),0) AS principal_payed ")
         sql.append(
             "    FROM Loan_Journal WHERE loan_excute_type = 'principal') Loan_Payed ")
         sql.append(

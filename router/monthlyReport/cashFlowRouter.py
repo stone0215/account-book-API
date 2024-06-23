@@ -19,6 +19,7 @@ from app.dao.model.otherAsset.stock_journal_model import StockJournal
 from app.dao.model.setting.account_model import Account
 from app.dao.model.setting.budget_model import Budget
 from app.dao.model.setting.credit_card_model import CreditCard
+from app.dao.model.dashboard.stock_price_history_model import StockPriceHistory
 
 date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
 
@@ -115,6 +116,21 @@ def init_journal_api(app):
         else:
             return jsonify(ResponseFormat.true_return(ResponseFormat, output))
 
+    @app.route('/stock/price/<string:vestingMonth>', methods=['GET'])
+    def getStockPriceByVestingMonth(vestingMonth):
+        output = []
+
+        try:
+            stocks = StockPriceHistory.queryByVestingMonth(
+                StockPriceHistory, vestingMonth)
+            for stock in stocks:
+                output.append(StockPriceHistory.output(
+                    StockPriceHistory, stock))
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+        else:
+            return jsonify(ResponseFormat.true_return(ResponseFormat, output))
+
     @app.route('/journal', methods=['POST'])
     def addJournal():
         global date_format
@@ -131,6 +147,22 @@ def init_journal_api(app):
                 return jsonify(ResponseFormat.true_return(ResponseFormat, Journal.output(Journal, result)))
             else:
                 return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to add journal data'))
+        except Exception as error:
+            return jsonify(ResponseFormat.false_return(ResponseFormat, error))
+
+    @app.route('/stock/price', methods=['POST'])
+    def updateStockPrice():
+
+        try:
+            inputData = request.get_json(force=True)
+            inputData['fetch_date'] = datetime.strptime(
+                inputData['fetch_date'], '%Y-%m-%d %H:%M:%S')
+            stock = StockPriceHistory(inputData)
+
+            if StockPriceHistory.add(StockPriceHistory, stock):
+                return jsonify(ResponseFormat.true_return(ResponseFormat, True))
+            else:
+                return jsonify(ResponseFormat.false_return(ResponseFormat, None, 'fail to add stock price data'))
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
 
@@ -183,18 +215,27 @@ def init_journal_api(app):
     @app.route('/balance/<string:vestingMonth>', methods=['PUT'])
     def setMonthlySummary(vestingMonth):
         try:
-            # 其他資產若是沒有本月份資料才塞，因為不會漏掉補帳
             estateOrLiabilityRecords = Journal.queryEstateOrLiabilityRecord(
-                Journal, vestingMonth)
+                Journal, vestingMonth).fetchall()  # fetchall 可關閉資料庫 cursor 狀態，避免 table lock，導致後續無法 delete
             for record in estateOrLiabilityRecords:
-                if record.name == 'Estate' and record.has_record == 0:
+                if record.name == 'Estate':
+                    # 清掉已存在的資料重塞
+                    if record.has_record != 0:
+                        EstateNetValueHistory.deleteByVestingMonth(
+                            EstateNetValueHistory, vestingMonth)
+
                     estates = Estate.query4Summary(Estate, vestingMonth)
                     for estate in estates:
                         obj = EstateNetValueHistory(estate)
                         obj.vesting_month = vestingMonth
                         EstateNetValueHistory.add(
                             EstateNetValueHistory, obj)
-                elif record.name == 'Insurance' and record.has_record == 0:
+                elif record.name == 'Insurance':
+                    # 清掉已存在的資料重塞
+                    if record.has_record != 0:
+                        InsuranceNetValueHistory.deleteByVestingMonth(
+                            InsuranceNetValueHistory, vestingMonth)
+
                     insurances = Insurance.query4Summary(
                         Insurance, vestingMonth)
                     for insurance in insurances:
@@ -202,17 +243,31 @@ def init_journal_api(app):
                         obj.vesting_month = vestingMonth
                         InsuranceNetValueHistory.add(
                             InsuranceNetValueHistory, obj)
-                elif record.name == 'Loan' and record.has_record == 0:
+                elif record.name == 'Loan':
+                    # 清掉已存在的資料重塞
+                    if record.has_record != 0:
+                        LoanBalance.deleteByVestingMonth(
+                            LoanBalance, vestingMonth)
+
                     loans = Loan.query4Summary(Loan, vestingMonth)
                     for loan in loans:
                         obj = LoanBalance(loan)
                         obj.vesting_month = vestingMonth
                         LoanBalance.add(LoanBalance, obj)
-                elif record.name == 'Stock' and record.has_record == 0:
+                elif record.name == 'Stock':
+                    # 清掉已存在的資料重塞
+                    if record.has_record != 0:
+                        StockNetValueHistory.deleteByVestingMonth(
+                            StockNetValueHistory, vestingMonth)
+
                     stocks = StockJournal.query4Summary(
                         StockJournal, vestingMonth)
                     for stock in stocks:
                         obj = StockNetValueHistory(stock)
+                        obj.amount = round(
+                            stock.positive_amount, 6)+round(stock.negative_amount, 6)
+                        obj.price = stock.close_price*obj.amount
+                        obj.cost = stock.positive_cost+stock.negative_cost
                         if obj.amount != 0:
                             obj.vesting_month = vestingMonth
                             StockNetValueHistory.add(StockNetValueHistory, obj)
@@ -223,7 +278,8 @@ def init_journal_api(app):
             # 先清掉含本月份之後的資料
             AccountBalance.delete(AccountBalance, vestingMonth)
             CreditCardBalance.delete(CreditCardBalance, vestingMonth)
-            journals = Journal.queryByVestingMonth(Journal, vestingMonth)
+            journals = Journal.queryByVestingMonth(
+                Journal, vestingMonth).fetchall()
             journalList = []
             for journal in journals:
                 journalList.append({
@@ -238,9 +294,10 @@ def init_journal_api(app):
                 })
             journalList.sort(key=lambda item: (
                 item['spend_way_table'], item['spend_way']))
-            accounts = Account.query4Summary(Account, lastMonth, vestingMonth)
+            accounts = Account.query4Summary(
+                Account, lastMonth, vestingMonth).fetchall()
             cards = CreditCard.query4Summary(
-                CreditCard, lastMonth, vestingMonth)
+                CreditCard, lastMonth, vestingMonth).fetchall()
 
             accountArray = AccountBalance.culculateBalance(
                 AccountBalance, vestingMonth, journalList, accounts)

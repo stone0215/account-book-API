@@ -12,7 +12,7 @@ class StockNetValueHistory(db.Model):
     stock_code = db.Column(db.String(10), nullable=False)
     stock_name = db.Column(db.String(60), nullable=False)
     asset_id = db.Column(db.Integer, primary_key=True)
-    amount = db.Column(db.SmallInteger, nullable=False)
+    amount = db.Column(db.Float, nullable=False)
     price = db.Column(db.Float, nullable=False)
     cost = db.Column(db.Float, nullable=False)
     fx_code = db.Column(db.String(3), nullable=False)
@@ -47,8 +47,9 @@ class StockNetValueHistory(db.Model):
         # else:
         #     return False
 
-    def delete(self, asset_id):
-        self.query.filter_by(asset_id=asset_id).delete()
+    def deleteByVestingMonth(self, vesting_month):
+        self.query.filter(self.vesting_month >= vesting_month).delete()
+
         if DaoBase.session_commit(self) == '':
             return True
         else:

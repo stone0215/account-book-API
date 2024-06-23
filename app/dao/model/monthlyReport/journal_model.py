@@ -78,9 +78,10 @@ class Journal(db.Model):
         return db.engine.execute(''.join(sql))
 
     def queryForExpenditureRatio(self, vestingMonth, sortColumn):
-        inputDate = datetime.strptime(vestingMonth, '%Y%m')
-        inputDateTime = datetime(
-            inputDate.year, inputDate.month+1, 1, 23, 59, 59)-timedelta(days=1)
+        inputDateTime = datetime.strptime(
+            vestingMonth, '%Y%m').replace(day=28) + timedelta(days=4)
+        inputDateTime = inputDateTime - timedelta(days=inputDateTime.day-1)
+
         sql = []
         sql.append(
             "SELECT *, name AS action_main_name, spending*IFNULL(fx_rate,1) AS spending FROM Journal ")
@@ -90,7 +91,7 @@ class Journal(db.Model):
         sql.append(
             " LEFT JOIN (SELECT code, buy_rate AS fx_rate, MAX(import_date) FROM FX_Rate ")
         sql.append(
-            f" WHERE import_date <= '{inputDateTime}' GROUP BY code) Rate ON Rate.code = Account.fx_code ")
+            f" WHERE import_date < '{inputDateTime}' GROUP BY code) Rate ON Rate.code = Account.fx_code ")
         sql.append(
             f" WHERE vesting_month = '{vestingMonth}' AND action_main_table='Code' ")
         sql.append(f" ORDER BY {sortColumn} ASC ")
@@ -201,19 +202,38 @@ class Journal(db.Model):
     def getGiftedList(self, year):
         sql = []
         sql.append(
-            "SELECT Account_From.owner, SUM(spending*IFNULL(buy_rate,1)) AS amount FROM Journal ")
+            "SELECT Account_From.owner, SUM(ABS(spending)*IFNULL(buy_rate,1)) AS amount FROM Journal ")
         sql.append(
-            "LEFT JOIN Account AS Account_From ON Account_From.id=spend_way ")
+            "LEFT JOIN Account AS Account_From ON Account_From.id=(CASE WHEN spending<0 THEN spend_way ELSE action_sub END) ")
         sql.append(
-            "LEFT JOIN Account AS Account_To ON Account_To.id=action_sub ")
+            "LEFT JOIN Account AS Account_To ON Account_To.id=(CASE WHEN spending<0 THEN action_sub ELSE spend_way END) ")
         sql.append(
-            "LEFT JOIN FX_Rate ON Account_From.fx_code=code AND spend_date=import_date ")
+            "LEFT JOIN FX_Rate ON Account_From.fx_code=code AND import_date=(SELECT MAX(import_date) AS import_date FROM FX_Rate WHERE STRFTIME('%Y%m', import_date)=vesting_month) ")
         sql.append(
             "WHERE spend_way_table='Account' AND action_sub_table='Account' AND action_main='Transfer' AND Account_From.owner IS NOT NULL ")
         sql.append(
             f"AND STRFTIME('%Y', spend_date)='{year}' AND Account_From.owner != Account_To.owner ")
         sql.append(
             "GROUP BY Account_From.owner ")
+
+        return db.engine.execute(''.join(sql))
+
+    def queryForBudget(self, year, code_id):
+        sql = []
+        sql.append(
+            "SELECT STRFTIME('%m', spend_date) AS month, SUM(spending*IFNULL(buy_rate,1)) AS spending from Journal ")
+        sql.append(
+            "LEFT JOIN Account ON spend_way_table='Account' AND spend_way=id ")
+        sql.append(
+            "LEFT JOIN Credit_Card ON spend_way_table='Credit_Card' AND spend_way=credit_card_id ")
+        sql.append(
+            "LEFT JOIN FX_Rate ON code = IFNULL(Account.fx_code, Credit_Card.fx_code) AND import_date=(SELECT MAX(import_date) AS import_date FROM FX_Rate WHERE STRFTIME('%Y%m', import_date)=vesting_month) ")
+        sql.append(
+            f"WHERE action_main_table='Code' AND action_main='{code_id}' ")
+        sql.append(
+            f"AND action_main_type != 'Passive' AND action_main_type != 'Income' AND STRFTIME('%Y', spend_date)='{year}' ")
+        sql.append(
+            "GROUP BY vesting_month ORDER BY vesting_month ")
 
         return db.engine.execute(''.join(sql))
 
@@ -287,6 +307,6 @@ class Journal(db.Model):
     def outputForGifted(self, data):
         return {
             'owner': data.owner,
-            'rate': abs(round(data.amount*100/2200000, 2)),
-            'amount': abs(data.amount)
+            'rate': round(data.amount*100/2200000, 2),
+            'amount': data.amount
         }

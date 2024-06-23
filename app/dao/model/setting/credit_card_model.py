@@ -87,7 +87,7 @@ class CreditCard(db.Model):
         sql.append(
             "UNION ALL ")
         sql.append(
-            f"SELECT 'Credit_Card' AS table_name, credit_card_id AS id, 'undefined' AS type, carrier_no FROM Credit_Card WHERE carrier_no = '{carrier_no}' ")
+            f"SELECT 'Credit_Card' AS table_name, credit_card_id AS id, 'Credit_Card' AS type, carrier_no FROM Credit_Card WHERE carrier_no = '{carrier_no}' ")
 
         return db.engine.execute(''.join(sql)).fetchone()
 

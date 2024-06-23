@@ -286,7 +286,7 @@ CREATE TABLE IF NOT EXISTS Stock_Detail (
 	distinct_number INTEGER PRIMARY KEY ASC AUTOINCREMENT,
 	stock_id INTEGER NOT NULL,
 	excute_type VARCHAR(20) NOT NULL, -- buy:買入/ sell:賣出/ stock:配股/ cash:配息
-	excute_amount INT, --以股為單位
+	excute_amount DECIMAL(7,5), --以股為單位
 	excute_price DECIMAL(9,3),
 	excute_date DATE NOT NULL,
 	account_id INTEGER NOT NULL,
@@ -302,7 +302,7 @@ CREATE TABLE IF NOT EXISTS Stock_Net_Value_History (
 	stock_code VARCHAR(10) NOT NULL,
 	stock_name NVARCHAR(60) NOT NULL,
 	asset_id INTEGER NOT NULL,
-	amount INT NOT NULL,
+	amount DECIMAL(7,5) NOT NULL,
 	price DECIMAL(7,3) NOT NULL,
 	cost DECIMAL(9,2) NOT NULL, -- 會算入配息，為計算當下報酬率
 	fx_code CHARACTER(3) NOT NULL,

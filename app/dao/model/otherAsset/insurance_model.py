@@ -88,9 +88,9 @@ class Insurance(db.Model):
         sql.append(
             " GROUP BY insurance_id) Journal_Cost ON Journal_Cost.insurance_id = Insurance.insurance_id ")
         sql.append(
-            " LEFT JOIN (SELECT insurance_id, excute_price AS surrender_value FROM Insurance_Journal ")
+            " LEFT JOIN (SELECT insurance_id, excute_price AS surrender_value, MAX(excute_date) FROM Insurance_Journal ")
         sql.append(
-            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND (insurance_excute_type='expect' OR insurance_excute_type='return')) ")
+            f" WHERE STRFTIME('%Y%m', excute_date) <= '{vestingMonth}' AND (insurance_excute_type='expect' OR insurance_excute_type='return') GROUP BY insurance_id) ")
         sql.append(
             " Journal_surrender ON Journal_surrender.insurance_id = Insurance.insurance_id ")
         sql.append(

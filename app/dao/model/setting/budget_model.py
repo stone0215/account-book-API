@@ -29,23 +29,23 @@ class Budget(db.Model):
     expected12 = db.Column(db.Float, nullable=False)
 
     # 物件建立之後所要建立的初始化動作
-    def __init__(self, category_code, category_name, code_type, budget_year=datetime.now().year, expected1=0, expected2=0, expected3=0, expected4=0, expected5=0, expected6=0, expected7=0, expected8=0, expected9=0, expected10=0, expected11=0, expected12=0):
-        self.budget_year = budget_year  # yyyy/mm
-        self.category_code = category_code  # Code_Data.code_id
-        self.category_name = category_name  # Code_Data.name
-        self.code_type = code_type  # Code_Data.code_type
-        self.expected01 = expected1
-        self.expected02 = expected2
-        self.expected03 = expected3
-        self.expected04 = expected4
-        self.expected05 = expected5
-        self.expected06 = expected6
-        self.expected07 = expected7
-        self.expected08 = expected8
-        self.expected09 = expected9
-        self.expected10 = expected10
-        self.expected11 = expected11
-        self.expected12 = expected12
+    def __init__(self, Budget):
+        self.budget_year = Budget['budget_year']  # yyyy
+        self.category_code = Budget['category_code']  # Code_Data.code_id
+        self.category_name = Budget['category_name']  # Code_Data.name
+        self.code_type = Budget['code_type']  # Code_Data.code_type
+        self.expected01 = Budget['expected01'] if 'expected01' in Budget else 0
+        self.expected02 = Budget['expected02'] if 'expected02' in Budget else 0
+        self.expected03 = Budget['expected03'] if 'expected03' in Budget else 0
+        self.expected04 = Budget['expected04'] if 'expected04' in Budget else 0
+        self.expected05 = Budget['expected05'] if 'expected05' in Budget else 0
+        self.expected06 = Budget['expected06'] if 'expected06' in Budget else 0
+        self.expected07 = Budget['expected07'] if 'expected07' in Budget else 0
+        self.expected08 = Budget['expected08'] if 'expected08' in Budget else 0
+        self.expected09 = Budget['expected09'] if 'expected09' in Budget else 0
+        self.expected10 = Budget['expected10'] if 'expected10' in Budget else 0
+        self.expected11 = Budget['expected11'] if 'expected11' in Budget else 0
+        self.expected12 = Budget['expected12'] if 'expected12' in Budget else 0
 
     # 定義物件的字串描述，執行 print(x) 就會跑這段
     def __str__(self):
@@ -66,9 +66,15 @@ class Budget(db.Model):
         sql = []
 
         sql.append(
-            f"SELECT code_type AS type, category_name AS name, spending, {budgetColumn} AS budget, {budgetColumn}-IFNULL(spending,0) AS quota FROM Budget ")
+            f"SELECT code_type AS type, category_name AS name, IFNULL(spending,0) AS spending, {budgetColumn} AS budget, {budgetColumn}-IFNULL(spending,0) AS quota FROM Budget ")
         sql.append(
-            "LEFT JOIN (SELECT action_main, action_main_type, SUM(spending) AS spending FROM Journal ")
+            "LEFT JOIN (SELECT action_main, action_main_type, SUM(spending*IFNULL(buy_rate,1)) AS spending FROM Journal ")
+        sql.append(
+            "LEFT JOIN Account ON spend_way_table='Account' AND spend_way=id ")
+        sql.append(
+            "LEFT JOIN Credit_Card ON spend_way_table='Credit_Card' AND spend_way=credit_card_id ")
+        sql.append(
+            "LEFT JOIN FX_Rate ON code = IFNULL(Account.fx_code, Credit_Card.fx_code) AND import_date=(SELECT MAX(import_date) AS import_date FROM FX_Rate WHERE STRFTIME('%Y%m', import_date)=vesting_month) ")
         sql.append(
             f"WHERE vesting_month = '{vestingMonth}' AND (action_main_type='Floating' OR action_main_type='Fixed') GROUP BY action_main, action_main_type) ")
         sql.append(
@@ -107,14 +113,15 @@ class Budget(db.Model):
             return False
 
     def bulkInsert(self, datas):
-        sql = 'INSERT INTO Budget(budget_year, category_code, category_name, code_type, expected1, expected2, expected3, expected4, expected5, expected6, expected7, expected8, expected9, expected10, expected11, expected12) VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16)'
+        sql = 'INSERT INTO Budget(budget_year, category_code, category_name, code_type, expected01, expected02, expected03, expected04, expected05, expected06, expected07, expected08, expected09, expected10, expected11, expected12) VALUES(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16)'
 
         params = []
         try:
             for item in datas:
-                # todo: search for better way to select before update
-                params.append((item.budget_year, item.category_code, item.category_name, item.code_type, item.expected1, item.expected2, item.expected3, item.expected4,
-                               item.expected5, item.expected6, item.expected7, item.expected8, item.expected9, item.expected10, item.expected11, item.expected12))
+                params.append((item.budget_year, item.category_code, item.category_name, item.code_type, item.expected01,
+                               item.expected02, item.expected03, item.expected04, item.expected05, item.expected06,
+                               item.expected07, item.expected08, item.expected09, item.expected10, item.expected11,
+                               item.expected12))
 
             db.engine.execute(sql, params)
             return True
@@ -128,12 +135,21 @@ class Budget(db.Model):
         try:
             for item in datas:
                 # todo: search for better way to select before update
-                params.append((item['expected1'], item['expected2'], item['expected3'], item['expected4'], item['expected5'], item['expected6'], item['expected7'], item['expected8'], item['expected9'], item['expected10'], item['expected11'], item['expected12'],
-                               item['budget_year'], item['category_code']))
+                params.append((item['expected1'], item['expected2'], item['expected3'], item['expected4'], item['expected5'],
+                               item['expected6'], item['expected7'], item['expected8'], item['expected9'], item['expected10'],
+                               item['expected11'], item['expected12'], item['budget_year'], item['category_code']))
 
             db.engine.execute(sql, params)
             return True
         except Exception as error:
+            return False
+
+    def deleteByYear(self, year):
+        self.query.filter(self.budget_year == year).delete()
+
+        if DaoBase.session_commit(self) == '':
+            return True
+        else:
             return False
 
     def outputByYear(self, budget):
@@ -167,7 +183,7 @@ class Budget(db.Model):
         return {
             'type': Journal.type,
             'name': Journal.name,
-            'spending': Journal.spending,
+            'spending': round(Journal.spending, 2),
             'budget': Journal.budget,
-            'quota': Journal.quota
+            'quota': round(Journal.quota, 3)
         }

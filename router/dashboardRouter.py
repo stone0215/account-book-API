@@ -111,33 +111,66 @@ def init_dashboard_api(app):
             )
             groupedAssetValues = []
             mappedDate = start
-            for key, groups in groupby(assets, lambda item: item.dateString):
+            # for key, groups in groupby(assets, lambda item: item.dateString):
+            #     balances = [
+            #         round(item.balance * item.fx_rate, 2) for item in list(groups)
+            #     ]
+            #     if type == "month":
+            #         while mappedDate.strftime(strFormat) != key:
+            #             groupedAssetValues.append(
+            #                 {
+            #                     "dateString": mappedDate.strftime(strFormat),
+            #                     "type": "asset",
+            #                     "value": 0,
+            #                 }
+            #             )
+
+            #             mappedDate = mappedDate + (
+            #                 relativedelta(months=1)
+            #                 if type == "month"
+            #                 else relativedelta(years=1)
+            #             )
+
+            #     groupedAssetValues.append(
+            #         {"dateString": key, "type": "asset", "value": sum(balances)}
+            #     )
+            #     mappedDate = mappedDate + (
+            #         relativedelta(months=1)
+            #         if type == "month"
+            #         else relativedelta(years=1)
+            #     )
+            for key, groups in groupby(
+                assets, lambda item: (item.dateString, item.type)
+            ):
                 balances = [
                     round(item.balance * item.fx_rate, 2) for item in list(groups)
                 ]
-                while mappedDate.strftime(strFormat) != key:
-                    groupedAssetValues.append(
-                        {
-                            "dateString": mappedDate.strftime(strFormat),
-                            "type": "asset",
-                            "value": 0,
-                        }
-                    )
-                    mappedDate = mappedDate + (
-                        relativedelta(months=1)
-                        if type == "month"
-                        else relativedelta(years=1)
-                    )
+                print("123", key, sum(balances))
+                # if type == "month":
+                # while mappedDate.strftime(strFormat) != key[0]:
+                #     groupedAssetTypes.append(
+                #         {
+                #             "dateString": mappedDate.strftime(strFormat),
+                #             "type": key[1],
+                #             "value": 0,
+                #         }
+                #     )
+
+                # mappedDate = mappedDate + (
+                #     relativedelta(months=1)
+                #     if type == "month"
+                #     else relativedelta(years=1)
+                # )
 
                 groupedAssetValues.append(
-                    {"dateString": key, "type": "asset",
-                        "value": sum(balances)}
+                    {"dateString": key[0], "type": key[1], "value": sum(balances)}
                 )
-                mappedDate = mappedDate + (
-                    relativedelta(months=1)
-                    if type == "month"
-                    else relativedelta(years=1)
-                )
+
+                # mappedDate = mappedDate + (
+                #     relativedelta(months=1)
+                #     if type == "month"
+                #     else relativedelta(years=1)
+                # )
             # 歷史負債
             debts = LoanBalance.getDebtBalanceHistory(
                 LoanBalance, start.strftime(strFormat), end, type
@@ -253,8 +286,7 @@ def init_dashboard_api(app):
     def getAlarmList():
         try:
             thisMonth = datetime.now().strftime("%Y%m")
-            lastMonth = (datetime.now() +
-                         (relativedelta(months=6))).strftime("%Y%m")
+            lastMonth = (datetime.now() + (relativedelta(months=6))).strftime("%Y%m")
 
             output = []
             # 用六個月跑撈出來的資料，如果到期日小於六個月的某個月就不塞，只塞到期日還沒到的
@@ -280,8 +312,7 @@ def init_dashboard_api(app):
                                 }
                             )
                 else:
-                    output.append({"date": alarm.alarm_date,
-                                   "content": alarm.content})
+                    output.append({"date": alarm.alarm_date, "content": alarm.content})
 
         except Exception as error:
             return jsonify(ResponseFormat.false_return(ResponseFormat, error))
@@ -319,8 +350,7 @@ def init_dashboard_api(app):
             if result:
                 return jsonify(
                     ResponseFormat.true_return(
-                        ResponseFormat, TargetSetting.output(
-                            TargetSetting, result)
+                        ResponseFormat, TargetSetting.output(TargetSetting, result)
                     )
                 )
             else:
@@ -338,8 +368,7 @@ def init_dashboard_api(app):
             target = TargetSetting.queryByKey(TargetSetting, id)
             if target is None:
                 return jsonify(
-                    ResponseFormat.false_return(
-                        ResponseFormat, None, "data not found")
+                    ResponseFormat.false_return(ResponseFormat, None, "data not found")
                 )
             else:
                 inputData = request.get_json(force=True)
