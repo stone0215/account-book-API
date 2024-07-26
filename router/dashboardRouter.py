@@ -218,14 +218,13 @@ def init_dashboard_api(app):
                 balanceSheetValue = getBalanceSheetByNow()
 
                 for item in balanceSheetValue["assets"]:
-                    assetValue += item["amount"]
+                    groupedAssetValues.append(
+                        {"dateString": period, "type": item, "value": item["amount"]}
+                    )
 
                 for item in balanceSheetValue["debts"]:
                     liabilityValue += item["amount"]
 
-                groupedAssetValues.append(
-                    {"dateString": period, "type": "asset", "value": assetValue}
-                )
                 groupedDebtValues.append(
                     {"dateString": period, "type": "debt", "value": liabilityValue}
                 )
